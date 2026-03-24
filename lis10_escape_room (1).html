@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>LIS 10 Information Escape Room</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A2E44;--teal:#0F6E56;--amber:#854F0B;--red:#993C1D;--slate:#2E4057;
+  --bg:#F8FAFB;--card:#fff;--border:#E2E8F0;--text:#1A202C;--muted:#64748B;
+  --success:#059669;--error:#DC2626;--warn:#D97706;
+  --worker-bg:#E1F5EE;--worker-b:#0F6E56;--worker-t:#085041;
+  --manager-bg:#FFF3CD;--manager-b:#854F0B;--manager-t:#633806;
+  --reg-bg:#E8EDF2;--reg-b:#1A2E44;--reg-t:#0D1B2A;
+  --oso-bg:#FAECE7;--oso-b:#993C1D;--oso-t:#712B13;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+h1{font-size:1.4rem;font-weight:700;color:var(--navy);line-height:1.25}
+h2{font-size:1rem;font-weight:600;color:var(--slate);margin-bottom:.6rem}
+h3{font-size:.9rem;font-weight:600;margin-bottom:.4rem}
+p,li{font-size:.88rem;line-height:1.65;color:var(--muted)}
+.screen{display:none;padding:1.25rem;max-width:600px;margin:0 auto;padding-bottom:3rem}
+.screen.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.2rem;margin-bottom:.9rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;padding:.55rem 1.1rem;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;transition:opacity .15s,background .15s;text-decoration:none}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{opacity:.88}
+.btn-success{background:var(--success);color:#fff}.btn-success:hover{opacity:.88}
+.btn-danger{background:var(--error);color:#fff}.btn-danger:hover{opacity:.88}
+.btn-outline{background:transparent;border:1.5px solid var(--navy);color:var(--navy)}.btn-outline:hover{background:#EBF2FA}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}.btn-ghost:hover{background:#F1F5F9}
+.btn:disabled{opacity:.38;cursor:not-allowed;pointer-events:none}
+.btn-full{display:flex;width:100%;padding:.7rem}
+select,input[type=text],input[type=password],textarea{width:100%;padding:.58rem .75rem;border:1px solid var(--border);border-radius:8px;font-size:.9rem;background:#fff;color:var(--text);font-family:inherit;transition:border-color .15s}
+textarea{resize:vertical;min-height:80px;line-height:1.6}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--navy);outline-offset:1px;border-color:transparent}
+.tag{display:inline-block;padding:.2rem .6rem;border-radius:5px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.tag-worker{background:var(--worker-bg);color:var(--worker-t);border:1px solid var(--worker-b)}
+.tag-manager{background:var(--manager-bg);color:var(--manager-t);border:1px solid var(--manager-b)}
+.tag-regulator{background:var(--reg-bg);color:var(--reg-t);border:1px solid var(--reg-b)}
+.tag-oso{background:var(--oso-bg);color:var(--oso-t);border:1px solid var(--oso-b)}
+.role-block{border-radius:10px;padding:.85rem 1rem;margin-bottom:.7rem}
+.role-block.worker{background:var(--worker-bg);border:1.5px solid var(--worker-b)}
+.role-block.manager{background:var(--manager-bg);border:1.5px solid var(--manager-b)}
+.role-block.regulator{background:var(--reg-bg);border:1.5px solid var(--reg-b)}
+.role-block.oso{background:var(--oso-bg);border:1.5px solid var(--oso-b)}
+.role-block label{display:block;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem}
+.role-block.worker label{color:var(--worker-t)}.role-block.manager label{color:var(--manager-t)}
+.role-block.regulator label{color:var(--reg-t)}.role-block.oso label{color:var(--oso-t)}
+.prog-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin:.6rem 0}
+.prog-fill{height:100%;background:var(--navy);border-radius:3px;transition:width .4s}
+.pip{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 2px}
+.pip-done{background:var(--success)}.pip-cur{background:#3B82F6}.pip-lock{background:var(--border)}
+.alert{border-radius:8px;padding:.6rem .85rem;font-size:.85rem;font-weight:600;margin-top:.5rem}
+.alert-error{background:#FEF2F2;color:var(--error)}.alert-ok{background:#D1FAE5;color:#065F46}
+.alert-warn{background:#FFFBEB;color:#92400E}.alert-info{background:#EFF6FF;color:#1E40AF}
+.loc-box{background:#FFFBEB;border:1.5px solid #F59E0B;border-radius:10px;padding:.85rem 1rem;margin:.8rem 0}
+.loc-box h3{color:#92400E;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}
+.loc-box p{color:#78350F;font-size:.92rem;font-weight:500;margin-top:.3rem}
+.timer-display{font-size:2.2rem;font-weight:700;color:var(--navy);text-align:center;font-variant-numeric:tabular-nums;letter-spacing:.05em}
+.waiting{animation:fade 1.4s ease-in-out infinite}
+@keyframes fade{0%,100%{opacity:1}50%{opacity:.45}}
+.lb-row{display:grid;grid-template-columns:1.8rem 1fr auto;gap:.65rem;align-items:center;padding:.55rem .7rem;border-radius:8px;margin-bottom:.35rem;border-left:3px solid transparent}
+.role-status-row{display:flex;gap:.4rem;flex-wrap:wrap;margin:.5rem 0}
+.role-chip{display:inline-flex;align-items:center;gap:.3rem;padding:.22rem .55rem;border-radius:6px;font-size:.75rem;font-weight:600}
+.chip-done{background:#D1FAE5;color:#065F46}.chip-missing{background:#F1F5F9;color:#94A3B8}
+.answer-excerpt{font-size:.78rem;color:var(--muted);background:#F8FAFB;border:1px solid var(--border);border-radius:6px;padding:.35rem .55rem;margin-top:.3rem;font-style:italic;line-height:1.5}
+.tab{display:inline-block;padding:.45rem .9rem;cursor:pointer;border-radius:8px 8px 0 0;font-size:.82rem;font-weight:600;border:1px solid var(--border);background:var(--bg);color:var(--muted)}
+.tab.active{background:var(--card);border-bottom-color:var(--card);color:var(--navy)}
+.tab-body{border:1px solid var(--border);border-radius:0 8px 8px 8px;background:var(--card);padding:1rem}
+.divider{border:none;border-top:1px solid var(--border);margin:.85rem 0}
+input[type=text].code-input{text-transform:uppercase;font-size:1.2rem;font-weight:700;letter-spacing:.12em;text-align:center}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- FIREBASE SDK -->
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-database-compat.min.js"></script>
+
+<!-- ═══ SETUP SCREEN ═══ -->
+<div id="screen-setup" class="screen active">
+  <div style="text-align:center;padding:2rem 0 1.25rem">
+    <div style="font-size:2.8rem;margin-bottom:.6rem">&#128274;</div>
+    <h1 style="margin-bottom:.35rem">LIS 10 Information Escape Room</h1>
+    <p style="font-size:.9rem">The Factory Case</p>
+  </div>
+  <div class="card" id="setup-config-card">
+    <h2>Firebase setup required</h2>
+    <p style="margin-bottom:.75rem">This app uses Firebase Realtime Database for live sync. Paste your Firebase config below, then save. You only need to do this once per deployment.</p>
+    <div style="margin-bottom:.75rem">
+      <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:.35rem">Firebase config (JSON)</label>
+      <textarea id="fb-config-input" rows="7" placeholder='{
+  "apiKey": "...",
+  "authDomain": "...",
+  "databaseURL": "...",
+  "projectId": "..."
+}'></textarea>
+    </div>
+    <div style="margin-bottom:.75rem">
+      <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:.35rem">Instructor passcode (set now)</label>
+      <input type="password" id="fb-passcode-input" placeholder="Choose a passcode (e.g. LIS10prof)">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="saveConfig()">Save and continue</button>
+    <div id="setup-feedback" style="margin-top:.5rem"></div>
+    <hr class="divider">
+    <p style="font-size:.8rem">Need a Firebase project? <a href="https://console.firebase.google.com" target="_blank" style="color:var(--navy)">console.firebase.google.com</a> &#8594; Create project &#8594; Realtime Database &#8594; Start in test mode &#8594; Copy config.</p>
+  </div>
+</div>
+
+<!-- ═══ LANDING ═══ -->
+<div id="screen-landing" class="screen">
+  <div style="text-align:center;padding:1.75rem 0 1.25rem">
+    <div style="font-size:2.5rem;margin-bottom:.5rem">&#128274;</div>
+    <h1 style="margin-bottom:.3rem">LIS 10 Escape Room</h1>
+    <p style="font-size:.88rem">The Factory Case &nbsp;&#8226;&nbsp; UP Diliman</p>
+  </div>
+  <div class="card">
+    <h2>Who are you?</h2>
+    <div style="margin-bottom:.85rem">
+      <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:.35rem">Group</label>
+      <select id="sel-group">
+        <option value="">-- Select group --</option>
+        <option value="A">Group A</option><option value="B">Group B</option>
+        <option value="C">Group C</option><option value="D">Group D</option>
+        <option value="E">Group E</option><option value="F">Group F</option>
+      </select>
+    </div>
+    <div style="margin-bottom:.85rem">
+      <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:.35rem">Role</label>
+      <select id="sel-role">
+        <option value="">-- Select role --</option>
+        <option value="worker">The Worker</option>
+        <option value="manager">The Manager</option>
+        <option value="regulator">The Regulator</option>
+        <option value="oso">The OSO</option>
+      </select>
+    </div>
+    <div style="margin-bottom:1rem">
+      <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:.35rem">Full name</label>
+      <input type="text" id="inp-name" placeholder="e.g. Juan dela Cruz">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="joinRace()">Join the race</button>
+    <div id="join-feedback" style="margin-top:.5rem"></div>
+  </div>
+  <div style="text-align:center;margin-top:.75rem">
+    <button class="btn btn-ghost" style="font-size:.8rem" onclick="showInstructorLogin()">Instructor</button>
+  </div>
+</div>
+
+<!-- ═══ INSTRUCTOR LOGIN ═══ -->
+<div id="screen-instructor-login" class="screen">
+  <div style="max-width:340px;margin:3rem auto 0">
+    <div class="card">
+      <h2>Instructor access</h2>
+      <div style="margin-bottom:.85rem">
+        <input type="password" id="instr-pass-input" placeholder="Enter passcode" onkeyup="if(event.key==='Enter')verifyInstructorPass()">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="verifyInstructorPass()">Enter</button>
+      <div id="pass-feedback" style="margin-top:.5rem"></div>
+    </div>
+    <div style="text-align:center;margin-top:.75rem">
+      <button class="btn btn-ghost" style="font-size:.8rem" onclick="showScreen('landing')">Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ WAITING FOR RACE START ═══ -->
+<div id="screen-waiting" class="screen">
+  <div style="text-align:center;padding:2.5rem 0">
+    <div class="timer-display waiting" id="waiting-msg">Waiting for instructor...</div>
+    <p style="margin-top:.75rem;font-size:.88rem">The race starts when your instructor taps "Start race timer."</p>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <span id="wait-group-badge" class="tag" style="background:var(--navy);color:#fff"></span>
+        <span id="wait-role-badge" class="tag" style="margin-left:.4rem"></span>
+      </div>
+      <span id="wait-name" style="font-size:.82rem;color:var(--muted)"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RACE ═══ -->
+<div id="screen-race" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem">
+    <div>
+      <span id="race-group-badge" class="tag" style="background:var(--navy);color:#fff"></span>
+      <span id="race-role-badge" class="tag" style="margin-left:.4rem"></span>
+    </div>
+    <div class="timer-display" id="race-timer" style="font-size:1.3rem">00:00</div>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  <div id="puzzle-pips" style="text-align:center;margin-bottom:.85rem"></div>
+  <div id="puzzle-area"></div>
+</div>
+
+<!-- ═══ FINISHED ═══ -->
+<div id="screen-finished" class="screen">
+  <div style="text-align:center;padding:2.5rem 0 1.5rem">
+    <div style="font-size:3.5rem;margin-bottom:.75rem">&#127937;</div>
+    <h1 style="margin-bottom:.5rem" id="finish-heading">You finished!</h1>
+    <p id="finish-sub" style="font-size:.95rem;color:var(--navy);font-weight:600;margin-bottom:.4rem"></p>
+    <p id="finish-time" style="font-size:.88rem"></p>
+  </div>
+  <div class="card">
+    <p>Your answers have been saved to the instructor's dashboard. You may now return to your seats.</p>
+  </div>
+</div>
+
+<!-- ═══ INSTRUCTOR DASHBOARD ═══ -->
+<div id="screen-instructor" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem">
+    <h1 style="font-size:1.15rem">Instructor Dashboard</h1>
+    <button class="btn btn-ghost" style="font-size:.78rem;padding:.35rem .7rem" onclick="showScreen('landing')">Exit</button>
+  </div>
+  <div style="display:flex;gap:.4rem;margin-bottom:-.5rem">
+    <div class="tab active" onclick="switchTab('lb',this)">Live race</div>
+    <div class="tab" onclick="switchTab('ans',this)">Answers</div>
+    <div class="tab" onclick="switchTab('ctrl',this)">Control</div>
+  </div>
+  <div class="tab-body">
+    <div id="tab-lb">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+        <h2 style="margin:0">Leaderboard</h2>
+        <span id="instr-clock" style="font-size:.82rem;color:var(--muted)"></span>
+      </div>
+      <div id="lb-list"></div>
+    </div>
+    <div id="tab-ans" style="display:none">
+      <h2>Role answers by group</h2>
+      <div id="ans-list"><p>Loading...</p></div>
+    </div>
+    <div id="tab-ctrl" style="display:none">
+      <h2>Race control</h2>
+      <div style="display:grid;gap:.65rem">
+        <div id="timer-status" class="alert alert-info" style="margin:0"></div>
+        <button class="btn btn-primary" onclick="startTimer()">&#9654; Start race timer</button>
+        <button class="btn btn-ghost" onclick="stopTimer()">&#9646;&#9646; Pause / reset timer</button>
+        <hr class="divider" style="margin:.25rem 0">
+        <div class="card" style="margin:0">
+          <h3 style="margin-bottom:.5rem">Code word key</h3>
+          <table style="width:100%;font-size:.82rem;border-collapse:collapse">
+            <tr style="color:var(--muted)"><th style="text-align:left;padding:.25rem .4rem">Puzzle</th><th style="padding:.25rem .4rem">Worker</th><th style="padding:.25rem .4rem">Manager</th><th style="padding:.25rem .4rem">Regulator</th><th style="padding:.25rem .4rem">OSO</th><th style="padding:.25rem .4rem;font-weight:700">Code</th></tr>
+            <tr><td style="padding:.25rem .4rem">P1 DIKW</td><td style="padding:.25rem .4rem;text-align:center">D</td><td style="padding:.25rem .4rem;text-align:center">I</td><td style="padding:.25rem .4rem;text-align:center">K</td><td style="padding:.25rem .4rem;text-align:center">W</td><td style="padding:.25rem .4rem;font-weight:700;color:var(--navy)">DIKW</td></tr>
+            <tr style="background:#F8FAFB"><td style="padding:.25rem .4rem">P2 McCreadie</td><td style="padding:.25rem .4rem;text-align:center">B</td><td style="padding:.25rem .4rem;text-align:center">A</td><td style="padding:.25rem .4rem;text-align:center">D</td><td style="padding:.25rem .4rem;text-align:center">C</td><td style="padding:.25rem .4rem;font-weight:700;color:var(--navy)">BADC</td></tr>
+            <tr><td style="padding:.25rem .4rem">P3 Library</td><td style="padding:.25rem .4rem;text-align:center">M</td><td style="padding:.25rem .4rem;text-align:center">A</td><td style="padding:.25rem .4rem;text-align:center">P</td><td style="padding:.25rem .4rem;text-align:center">S</td><td style="padding:.25rem .4rem;font-weight:700;color:var(--navy)">MAPS</td></tr>
+            <tr style="background:#F8FAFB"><td style="padding:.25rem .4rem">P4 Copyright</td><td style="padding:.25rem .4rem;text-align:center">R</td><td style="padding:.25rem .4rem;text-align:center">F</td><td style="padding:.25rem .4rem;text-align:center">S</td><td style="padding:.25rem .4rem;text-align:center">A</td><td style="padding:.25rem .4rem;font-weight:700;color:var(--navy)">RFSA</td></tr>
+            <tr><td style="padding:.25rem .4rem">P5 Analytics</td><td style="padding:.25rem .4rem;text-align:center">D</td><td style="padding:.25rem .4rem;text-align:center">W</td><td style="padding:.25rem .4rem;text-align:center">R</td><td style="padding:.25rem .4rem;text-align:center">L</td><td style="padding:.25rem .4rem;font-weight:700;color:var(--navy)">DWRL</td></tr>
+            <tr style="background:#F8FAFB"><td style="padding:.25rem .4rem">P6 Convergence</td><td colspan="5" style="padding:.25rem .4rem;color:var(--muted);font-style:italic">No code -- synthesis submission unlocks finish</td></tr>
+          </table>
+        </div>
+        <hr class="divider" style="margin:.25rem 0">
+        <button class="btn btn-danger" onclick="resetAll()" style="font-size:.82rem">Reset all data (new race)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONFIG & FIREBASE INIT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const LS_CONFIG = 'lis10_fb_config';
+const LS_PASS   = 'lis10_instr_pass';
+const LS_SESSION= 'lis10_session';
+
+let db = null;
+let INSTR_PASS = '';
+
+function loadConfig(){
+  try{
+    const raw = localStorage.getItem(LS_CONFIG);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){return null;}
+}
+
+function initFirebase(cfg){
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(cfg);
+    else firebase.app();
+    db = firebase.database();
+    return true;
+  }catch(e){console.error(e);return false;}
+}
+
+function saveConfig(){
+  const raw = document.getElementById('fb-config-input').value.trim();
+  const pass= document.getElementById('fb-passcode-input').value.trim();
+  const fb  = document.getElementById('setup-feedback');
+  if(!pass){fb.innerHTML='<div class="alert alert-error">Set an instructor passcode.</div>';return;}
+  let cfg;
+  try{cfg=JSON.parse(raw);}
+  catch(e){fb.innerHTML='<div class="alert alert-error">Invalid JSON. Check your Firebase config.</div>';return;}
+  if(!cfg.databaseURL){fb.innerHTML='<div class="alert alert-error">Config must include databaseURL.</div>';return;}
+  if(!initFirebase(cfg)){fb.innerHTML='<div class="alert alert-error">Firebase init failed. Check config.</div>';return;}
+  localStorage.setItem(LS_CONFIG, raw);
+  localStorage.setItem(LS_PASS, pass);
+  INSTR_PASS = pass;
+  fb.innerHTML='<div class="alert alert-ok">Saved! Loading...</div>';
+  setTimeout(()=>showScreen('landing'),900);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GAME DATA
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const GROUPS = {
+  A:{chain:[1,2,3,4,5,6],color:'#B71C1C'},
+  B:{chain:[2,3,4,5,6,1],color:'#1B5E20'},
+  C:{chain:[3,4,5,6,1,2],color:'#0D47A1'},
+  D:{chain:[4,5,6,1,2,3],color:'#E65100'},
+  E:{chain:[5,6,1,2,3,4],color:'#4A148C'},
+  F:{chain:[6,1,2,3,4,5],color:'#00695C'},
+};
+
+const CODES = {1:'DIKW',2:'BADC',3:'MAPS',4:'RFSA',5:'DWRL',6:null};
+const ROLE_IDX = {worker:0,manager:1,regulator:2,oso:3};
+const ROLE_LABELS = {worker:'The Worker',manager:'The Manager',regulator:'The Regulator',oso:'The OSO'};
+const ROLE_TAG = {worker:'tag-worker',manager:'tag-manager',regulator:'tag-regulator',oso:'tag-oso'};
+const SCORES = [100,95,90,85,80,75];
+const RANK_WORDS = ['1st','2nd','3rd','4th','5th','6th'];
+
+const PUZZLES = {
+  1:{title:'The Building Blocks',topic:'DIKW',
+    location:'Classroom -- your starting table',
+    scenario:'Mang Totoy\'s incident generated four pieces of information. Read each item as a group, then each role answers their individual question. Your first letters combine to form the 4-letter code word.',
+    items:['(A) Incident logbook: "14 March, 09:22, Dyeing Section, 1 worker affected, chemical exposure." No name, no explanation.',
+           '(B) Nurse\'s report: chemical identified (Disperse Blue 3), 40 min exposure, no PPE, symptoms listed, referred to hospital.',
+           '(C) DOLE inspector, after reading the report and cross-referencing OSHS Rule 1070: "The company has violated this rule for at least one year."',
+           '(D) Mang Totoy\'s wife, understanding his rights, decides to file a DOLE complaint and claim Employees\' Compensation.'],
+    questions:{
+      worker:'(A) is raw data. What ONE thing must be added to transform it into information for a worker like Mang Totoy? (Your answer must begin with the letter D.)',
+      manager:'(B) is information. What specific ingredient was added to the numbers and observations to make the nurse\'s report information rather than data? (Your answer must begin with the letter I.)',
+      regulator:'(C) is knowledge. What did the inspector bring to the information that the information itself could not provide? (Your answer must begin with the letter K.)',
+      oso:'(D) is wisdom. In one sentence, what makes this a wisdom-level act and not just knowledge? (Your answer must begin with the letter W.)'
+    },
+    hints:{worker:'Think: what makes symbols meaningful? (D_____)',manager:'Think: what turns raw data into something understandable? (I_________)',regulator:'Think: what does expertise bring that reading alone cannot? (K_________)',oso:'Think: what quality of wisdom distinguishes it from knowledge? (W______)'}
+  },
+  2:{title:'The Many Faces of Information',topic:'McCreadie & Rice',
+    location:'Classroom door (inside) -- envelope labeled COMMODITY',
+    scenario:'Five information events from the factory case. Each role owns specific events. Match them to McCreadie & Rice\'s four conceptualizations, then answer your role question. First letters combine to form the code word.',
+    items:['(1) The factory alarm sounds -- noise travels physically through the air into workers\' ears before anyone reads any report.',
+           '(2) The HR officer buys Azucena\'s Everyone\'s Labor Code (Rex Book Store, PHP 1,250) to check the company\'s obligations.',
+           '(3) DOLE sends a formal Notice of Inspection by registered mail. The company reads and acknowledges it in writing.',
+           '(4) The OSO\'s Chemical Safety Data Sheet (SDS) binder -- 200 pages of original hazard analyses written over three years.',
+           '(5) A co-worker notices the dyeing section smells strongly of chemicals every morning -- a sensory pattern no one has documented.'],
+    questions:{
+      worker:'Events (1) and (5) are both "information as data in the environment." In one sentence, what do these two share that makes BOTH of them that conceptualization? (Your answer must begin with the letter B.)',
+      manager:'Event (2) is yours. What conceptualization is it, and in one sentence, what makes information a "commodity"? (Your answer must begin with the letter A.)',
+      regulator:'Event (3) is yours. What conceptualization is it? Identify the specific act that makes this the communication process conceptualization. (Your answer must begin with the letter D.)',
+      oso:'Event (4) is yours. Why is the SDS a "representation of knowledge" and not just data? (Your answer must begin with the letter C.)'
+    },
+    hints:{worker:'Think: what is sensed but not yet interpreted, existing in the physical environment? (B___)',manager:'Think: it was bought, sold, produced for consumption. (A ___ Commodity)',regulator:'Think: sender, message, medium, receiver -- the act of informing. (D___)',oso:'Think: original knowledge recorded in stable, perceivable form. (C___________)'}
+  },
+  3:{title:'Read the Book, Build the Pyramid',topic:'DIKW from a real book',
+    location:'SOLAIR Library -- ask the librarian for the envelope labeled ERASURE',
+    scenario:'At the SOLAIR Library reference desk, ask for the Handbook on Workers\' Statutory Monetary Benefits (Call No. HD 4928 N62 P6 P45 2017). Open to the RED bookmark (data) and BLUE bookmark (information). Read both pages together, then each role answers from what you read.',
+    items:['RED BOOKMARK (Data): A table of raw benefit computation figures -- percentages, day counts, peso caps. No explanation of what any of it means.',
+           'BLUE BOOKMARK (Information): The legal narrative explaining each benefit -- who qualifies, the formula, how to apply.',
+           'Your group must now generate KNOWLEDGE and WISDOM from what you read.'],
+    questions:{
+      worker:'What does Mang Totoy now understand about his rights that he could NOT have known from the numbers in the red bookmark alone? (Your answer must begin with the letter M -- think: what specifically belongs to him now.)',
+      manager:'What action must the company take that the raw figures in the red bookmark alone could NOT have told them? (Your answer must begin with the letter A.)',
+      regulator:'Name the ONE principle of RA 10173 most at risk if the company shares Mang Totoy\'s medical data with all 12 HR officers without his knowledge. (Your answer must begin with the letter P.)',
+      oso:'Write one specific, actionable wisdom statement -- something the company must do before any future chemical handling shift. (Your answer must begin with the letter S.)'
+    },
+    hints:{worker:'Think: what right or entitlement does he now know he has? (M___ Totoy\'s right to...)',manager:'Think: what obligation does the company now understand it must fulfill? (A_______ / A_____)',regulator:'Think: which DPA principle is violated when you share more data than needed with more people than necessary? (P_______________)',oso:'Think: a specific pre-shift safety procedure. (S_______ / S___ the...)'}
+  },
+  4:{title:"The Blogger's Dilemma",topic:'Copyright -- RA 8293',
+    location:'SOLAIR Library -- ask the librarian for the envelope labeled SECTION185',
+    scenario:'The OSO wants to write a blog about chemical safety for workers. Three materials are available from Azucena\'s Everyone\'s Labor Code (Call No. KF 5616.7 1974 A97 2021, bookmarked). Each role answers one question. First letters combine to form the code word.',
+    items:['Material A: Two paragraphs of Azucena\'s own commentary and analysis of Article 162 -- his original writing.',
+           'Material B: The text of Article 162 of the Labor Code reproduced verbatim from the statute.',
+           'Material C: A table of maximum chemical exposure levels derived from DOLE OSHS standards.'],
+    questions:{
+      worker:'Which economic right of Azucena (Sec. 177, RA 8293) would be violated if the OSO copies Material A into the blog without permission? Name the right. (Your answer must begin with the letter R.)',
+      manager:'Material B is the statutory text of the law. Is it protected under RA 8293? Is it free to use? Name the provision that applies. (Your answer must begin with the letter F.)',
+      regulator:'The OSO argues Material A is covered by fair use for worker education. Which section of RA 8293 is this? Write only the section identifier. (Your answer must begin with the letter S.)',
+      oso:'What is the ONE lawful action the OSO must take to use Material A properly in the blog? (Your answer must begin with the letter A -- think: what do you give the author?)'
+    },
+    hints:{worker:'Think: which right covers reproducing/copying a work? (R_____________ right)',manager:'Think: statutory texts are not protected -- Sec. 175 says it is... (F___ to use)',regulator:'Think: the fair use clause of RA 8293. (S_______ 185)',oso:'Think: what do you give the author when you quote them? (A____________)'}
+  },
+  5:{title:'The Analytics War Room',topic:'Four Levels of Analytics',
+    location:'Hallway wall near staircase -- envelope labeled PRESCRIPTIVE',
+    scenario:'DOLE inspection data from the factory. Each role owns one analytics level and answers from that level. First letters combine to form the code word. The group must also write a final wisdom sentence together.',
+    items:['Dyeing Section (14 workers): PHP 610/day | NCR min wage PHP 645 | No PPE | 420 lost workdays (avg 30/worker)',
+           'Cutting Section (22 workers): PHP 645/day | Gloves only | 88 lost workdays (avg 4/worker)',
+           'Finishing Section (18 workers): PHP 645/day | Full PPE | 12 lost workdays (avg 0.7/worker)',
+           'Supervisors (6): PHP 900/day | Full PPE | 0 lost workdays'],
+    questions:{
+      worker:'DESCRIPTIVE (What happened?): Summarize the most important pattern in the data from a worker\'s perspective in 1-2 sentences. (Your answer must begin with the letter D.)',
+      manager:'DIAGNOSTIC (Why did it happen?): Why does the dyeing section have the highest injury rate? Connect cause to effect in 2 sentences. (Your answer must begin with the letter W.)',
+      regulator:'PREDICTIVE (What will happen?): What will most likely occur in the dyeing section over the next 12 months if nothing changes? Cite one specific legal consequence. (Your answer must begin with the letter R.)',
+      oso:'PRESCRIPTIVE (What should be done?): One specific, data-grounded recommendation that goes beyond the legal minimum. (Your answer must begin with the letter L.)'
+    },
+    hints:{worker:'Think: describe the DATA pattern -- wages and workdays. (D___ shows...)',manager:'Think: Why -- connect absence of PPE to injury rate. (W_______ PPE...)',regulator:'Think: what Risk or legal Result follows from non-compliance? Cite RA 11058. (R______...)',oso:'Think: a specific Long-term or immediately impactful action. (L_____...)'}
+  },
+  6:{title:'THE CONVERGENCE',topic:'Integration -- all four topics',
+    location:"Instructor's table -- envelope labeled CONVERGENCE",
+    scenario:'Each role answers ONE integration question from their lens. No code word -- submitting all answers finishes the race. All four role answers plus the group synthesis must be filled before submission is enabled.',
+    items:['The case: Logbook entry (data) -- nurse\'s report (information) -- inspector\'s conclusion (knowledge) -- company decision (wisdom).',
+           'The blog: OSO used Azucena\'s commentary (fair use, Sec. 185) and NWPC wage data (Sec. 175, not copyrightable).',
+           'Privacy issue: Company stored Mang Totoy\'s injury records in a shared HR drive accessible to 12 officers.'],
+    questions:{
+      worker:'TOPIC 1+2: After the case, Mang Totoy\'s family asks the company to delete his health records. Name the specific RA 10173 right they invoke. Then: if those records were deleted before the DOLE inspection, would the journey to wisdom have been possible? Why or why not? (2-3 sentences)',
+      manager:'TOPIC 1+4: The inspector\'s conclusion -- "the company violated Rule 1070 for at least one year" -- required cross-referencing the nurse\'s report with past records. Which DIKW level is this AND which analytics level produced it? Explain why both are the same level.',
+      regulator:'TOPIC 2+3: The OSO published Mang Totoy\'s name and diagnosis in the blog as a case study. (a) Which DPA principle does this violate and why? (b) Does Sec. 185 (fair use) protect this use? Give one specific reason either way.',
+      oso:'TOPIC 3+4: The blog used Azucena\'s commentary AND the NWPC wage table. For each: was a lawful basis needed and what is it? Then: how did having BOTH move readers from information to knowledge?'
+    },
+    synthesis:'GROUP SYNTHESIS (all members sign): In three sentences, explain how all four LIS 10 topics -- the nature of information, data privacy, copyright, and data analytics -- each played a specific role in Mang Totoy\'s journey from the raw logbook entry (DATA) to the company\'s final prescriptive decision (WISDOM). Name the concept, the law or provision, and the DIKW stage each topic affected.'
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOCAL STATE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let SESSION = {group:null,role:null,name:null,puzzleIdx:0};
+let timerInterval = null;
+let raceStartTime = null;
+let instrRefreshInterval = null;
+
+function saveSession(){
+  localStorage.setItem(LS_SESSION, JSON.stringify(SESSION));
+}
+function loadSession(){
+  try{
+    const raw = localStorage.getItem(LS_SESSION);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){return null;}
+}
+function clearSession(){
+  localStorage.removeItem(LS_SESSION);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+
+function switchTab(id, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['lb','ans','ctrl'].forEach(t=>{
+    const el = document.getElementById('tab-'+t);
+    if(el) el.style.display = t===id?'block':'none';
+  });
+  if(id==='ans') renderAnswersTab();
+}
+
+function showInstructorLogin(){showScreen('instructor-login');}
+
+function verifyInstructorPass(){
+  const inp = document.getElementById('instr-pass-input').value;
+  const fb  = document.getElementById('pass-feedback');
+  if(inp === INSTR_PASS){
+    showScreen('instructor');
+    startInstructorRefresh();
+  }else{
+    fb.innerHTML='<div class="alert alert-error">Incorrect passcode.</div>';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FIREBASE HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function dbRef(path){return db.ref(path);}
+
+async function dbGet(path){
+  const snap = await dbRef(path).get();
+  return snap.exists() ? snap.val() : null;
+}
+async function dbSet(path, val){return dbRef(path).set(val);}
+async function dbUpdate(path, val){return dbRef(path).update(val);}
+
+function dbOn(path, cb){
+  dbRef(path).on('value', snap=>cb(snap.exists()?snap.val():null));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RACE ENTRY
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function joinRace(){
+  const group = document.getElementById('sel-group').value;
+  const role  = document.getElementById('sel-role').value;
+  const name  = document.getElementById('inp-name').value.trim();
+  const fb    = document.getElementById('join-feedback');
+
+  if(!group||!role||!name){
+    fb.innerHTML='<div class="alert alert-error">Please fill in all three fields.</div>';return;
+  }
+  fb.innerHTML='<div class="alert alert-info"><span class="spinner"></span> Connecting...</div>';
+
+  // Check if this role in this group is already taken
+  const existing = await dbGet('groups/'+group+'/members/'+role);
+  if(existing && existing.name && existing.name !== name){
+    fb.innerHTML=`<div class="alert alert-error">The ${ROLE_LABELS[role]} role in Group ${group} is already taken by ${existing.name}. Choose a different role or group.</div>`;
+    return;
+  }
+
+  // Restore puzzle progress from DB
+  const progress = await dbGet('groups/'+group+'/progress') || {completedPuzzles:[],puzzleIdx:0};
+  const chain = GROUPS[group].chain;
+  let pidx = 0;
+  for(let i=0;i<chain.length;i++){
+    if((progress.completedPuzzles||[]).includes(chain[i])) pidx = i+1;
+    else break;
+  }
+
+  SESSION = {group, role, name, puzzleIdx: Math.min(pidx, chain.length-1)};
+  saveSession();
+
+  // Register member
+  await dbSet('groups/'+group+'/members/'+role, {name, joinedAt: Date.now()});
+
+  // Check if race already started
+  const startTime = await dbGet('race/startTime');
+  renderWaitingOrRace(startTime);
+  fb.innerHTML='';
+}
+
+function renderWaitingOrRace(startTime){
+  const {group, role} = SESSION;
+  // Update badges (waiting screen)
+  const gBadge = document.getElementById('wait-group-badge');
+  gBadge.textContent='Group '+group;
+  gBadge.style.background=GROUPS[group].color;
+  const rBadge = document.getElementById('wait-role-badge');
+  rBadge.textContent=ROLE_LABELS[role];
+  rBadge.className='tag '+ROLE_TAG[role];
+  document.getElementById('wait-name').textContent=SESSION.name;
+
+  if(startTime){
+    raceStartTime = startTime;
+    enterRaceScreen();
+  }else{
+    showScreen('waiting');
+    // Listen for race start
+    dbOn('race/startTime', val=>{
+      if(val && document.getElementById('screen-waiting').classList.contains('active')){
+        raceStartTime = val;
+        enterRaceScreen();
+      }
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RACE SCREEN
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function enterRaceScreen(){
+  const {group, role} = SESSION;
+  // Badges
+  const gb = document.getElementById('race-group-badge');
+  gb.textContent='Group '+group; gb.style.background=GROUPS[group].color;
+  const rb = document.getElementById('race-role-badge');
+  rb.textContent=ROLE_LABELS[role]; rb.className='tag '+ROLE_TAG[role];
+
+  showScreen('race');
+  startTimerDisplay();
+  renderPuzzle();
+}
+
+function startTimerDisplay(){
+  if(timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(()=>{
+    if(!raceStartTime) return;
+    const el = document.getElementById('race-timer');
+    if(el) el.textContent = fmtTime(Date.now()-raceStartTime);
+  },500);
+}
+
+function fmtTime(ms){
+  const s=Math.floor(ms/1000), m=Math.floor(s/60);
+  return String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+}
+
+async function renderPuzzle(){
+  const {group, role, puzzleIdx} = SESSION;
+  const chain = GROUPS[group].chain;
+
+  // Check if race is over for this group
+  if(puzzleIdx >= chain.length){showFinishedScreen();return;}
+
+  const pNum   = chain[puzzleIdx];
+  const puzzle = PUZZLES[pNum];
+  const isP6   = pNum === 6;
+
+  // Update progress pip
+  renderPips();
+
+  // Load existing answer for this role at this puzzle
+  const existing = await dbGet('groups/'+group+'/answers/p'+pNum+'/'+role) || '';
+  const existingSynth = isP6 ? (await dbGet('groups/'+group+'/answers/p'+pNum+'/synthesis') || '') : '';
+
+  const rc = role; // css class name matches role key
+  const q  = puzzle.questions[role];
+  const hint = (puzzle.hints||{})[role] || '';
+
+  let html = `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.65rem">
+        <div>
+          <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">
+            Puzzle ${puzzleIdx+1}/${chain.length} &nbsp;&#183;&nbsp; ${puzzle.topic}
+          </div>
+          <h1 style="font-size:1.1rem;margin-bottom:0">${puzzle.title}</h1>
+        </div>
+        ${isP6
+          ? '<span style="background:#D1FAE5;color:#065F46;border-radius:6px;padding:.25rem .55rem;font-size:.72rem;font-weight:700;flex-shrink:0">Final puzzle</span>'
+          : '<span style="background:#DBEAFE;color:#1E40AF;border-radius:6px;padding:.25rem .55rem;font-size:.72rem;font-weight:700;flex-shrink:0">Code needed</span>'}
+      </div>
+      <div class="loc-box"><h3>Where to go</h3><p>${puzzle.location}</p></div>
+      <p style="font-size:.87rem;margin-bottom:.65rem">${puzzle.scenario}</p>
+      <div style="background:#F8FAFB;border-radius:8px;padding:.7rem;margin-bottom:.1rem">
+        ${puzzle.items.map(it=>`<p style="font-size:.83rem;margin-bottom:.45rem;color:var(--text)">${it}</p>`).join('')}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="role-block ${rc}" style="margin-bottom:0">
+        <label>${ROLE_LABELS[role]} -- your task</label>
+        <p style="font-size:.88rem;color:inherit;margin-bottom:.65rem">${q}</p>
+        <textarea id="role-ans" placeholder="Type your answer here...">${existing}</textarea>
+        ${hint?`<p style="font-size:.75rem;margin-top:.45rem;opacity:.75">Hint: ${hint}</p>`:''}
+        <button class="btn btn-outline" style="margin-top:.65rem;font-size:.8rem" onclick="saveMyAnswer(${pNum})">
+          Save my answer
+        </button>
+        <div id="save-feedback" style="margin-top:.4rem"></div>
+      </div>
+    </div>`;
+
+  if(isP6){
+    html += `
+    <div class="card">
+      <h2>Group synthesis <span style="font-weight:400;color:var(--muted);font-size:.82rem">(all members contribute)</span></h2>
+      <p style="font-size:.85rem;margin-bottom:.65rem">${puzzle.synthesis}</p>
+      <textarea id="synth-ans" placeholder="Write your group's 3-sentence synthesis here..." rows="6">${existingSynth}</textarea>
+      <button class="btn btn-outline" style="margin-top:.65rem;font-size:.8rem" onclick="saveSynthesis(${pNum})">Save synthesis</button>
+      <div id="synth-feedback" style="margin-top:.4rem"></div>
+    </div>
+    <div id="p6-submit-area"></div>`;
+  } else {
+    html += `
+    <div class="card" id="code-card">
+      <h2>Code word check</h2>
+      <div id="roles-status" style="margin-bottom:.75rem"></div>
+      <p style="font-size:.85rem;margin-bottom:.65rem">Once all four roles have saved their answers, combine the first letter of each correct answer (Worker / Manager / Regulator / OSO) to form the 4-letter code word.</p>
+      <div id="code-input-area">
+        <div style="display:flex;gap:.5rem;margin-bottom:.5rem">
+          <input type="text" id="code-inp" class="code-input" placeholder="4-LETTER CODE" maxlength="6" style="flex:1">
+          <button class="btn btn-primary" id="check-btn" onclick="checkCode(${pNum})">Check</button>
+        </div>
+        <div id="code-fb"></div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('puzzle-area').innerHTML = html;
+
+  // Wire auto-save on blur
+  document.getElementById('role-ans').addEventListener('blur', ()=>saveMyAnswer(pNum, true));
+
+  if(!isP6){
+    // Start polling role status
+    pollRolesStatus(pNum);
+    document.getElementById('code-inp').addEventListener('keyup', e=>{
+      if(e.key==='Enter') checkCode(pNum);
+    });
+  }
+
+  if(isP6){
+    document.getElementById('synth-ans').addEventListener('blur', ()=>saveSynthesis(pNum, true));
+    pollP6Readiness(pNum);
+  }
+}
+
+function renderPips(){
+  const {group, puzzleIdx} = SESSION;
+  const chain = GROUPS[group].chain;
+  let html='';
+  chain.forEach((_,i)=>{
+    const done=i<puzzleIdx, cur=i===puzzleIdx;
+    html+=`<span class="pip ${done?'pip-done':cur?'pip-cur':'pip-lock'}"></span>`;
+  });
+  const el=document.getElementById('puzzle-pips');
+  if(el) el.innerHTML=html;
+  const pf=document.getElementById('prog-fill');
+  if(pf) pf.style.width=Math.round((puzzleIdx/chain.length)*100)+'%';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SAVING ANSWERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function saveMyAnswer(pNum, silent=false){
+  const {group, role} = SESSION;
+  const ans = document.getElementById('role-ans').value.trim();
+  const fb  = document.getElementById('save-feedback');
+  if(!ans){if(!silent)fb.innerHTML='<div class="alert alert-error">Write your answer first.</div>';return;}
+  if(!silent) fb.innerHTML='<div class="alert alert-info"><span class="spinner"></span> Saving...</div>';
+  await dbSet('groups/'+group+'/answers/p'+pNum+'/'+role, ans);
+  await dbSet('groups/'+group+'/answers/p'+pNum+'/'+role+'_name', SESSION.name);
+  if(!silent) fb.innerHTML='<div class="alert alert-ok">Saved!</div>';
+  setTimeout(()=>{if(fb)fb.innerHTML='';},2000);
+}
+
+async function saveSynthesis(pNum, silent=false){
+  const {group} = SESSION;
+  const ans = document.getElementById('synth-ans').value.trim();
+  const fb  = document.getElementById('synth-feedback');
+  if(!ans){if(!silent)fb.innerHTML='<div class="alert alert-error">Write the synthesis first.</div>';return;}
+  if(!silent) fb.innerHTML='<div class="alert alert-info"><span class="spinner"></span> Saving...</div>';
+  await dbSet('groups/'+group+'/answers/p'+pNum+'/synthesis', ans);
+  if(!silent) fb.innerHTML='<div class="alert alert-ok">Saved!</div>';
+  setTimeout(()=>{if(fb)fb.innerHTML='';},2000);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ROLE STATUS POLLING (must all answer before code entry is enabled)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let rolesStatusInterval = null;
+
+function pollRolesStatus(pNum){
+  if(rolesStatusInterval) clearInterval(rolesStatusInterval);
+  checkRolesStatus(pNum);
+  rolesStatusInterval = setInterval(()=>checkRolesStatus(pNum), 3000);
+}
+
+async function checkRolesStatus(pNum){
+  const {group} = SESSION;
+  const answers = await dbGet('groups/'+group+'/answers/p'+pNum) || {};
+  const roles = ['worker','manager','regulator','oso'];
+  const done  = roles.filter(r=>answers[r]&&answers[r].trim().length>0);
+  const missing = roles.filter(r=>!answers[r]||answers[r].trim().length===0);
+
+  const statusEl = document.getElementById('roles-status');
+  const inputArea = document.getElementById('code-input-area');
+  if(!statusEl) return;
+
+  const chips = roles.map(r=>{
+    const isDone = done.includes(r);
+    const nameStr = isDone ? (answers[r+'_name']||'') : '';
+    return `<span class="role-chip ${isDone?'chip-done':'chip-missing'}">
+      ${isDone?'&#10003;':'&#8226;'} ${ROLE_LABELS[r]}${nameStr?' ('+nameStr.split(' ')[0]+')':''}
+    </span>`;
+  }).join('');
+
+  statusEl.innerHTML = `<div class="role-status-row">${chips}</div>`;
+
+  const allDone = missing.length === 0;
+  if(inputArea){
+    const btn = document.getElementById('check-btn');
+    const inp = document.getElementById('code-inp');
+    if(btn) btn.disabled = !allDone;
+    if(inp) inp.disabled = !allDone;
+    if(!allDone){
+      if(!document.getElementById('waiting-chip')){
+        const w = document.createElement('div');
+        w.id='waiting-chip';
+        w.className='alert alert-warn';
+        w.style.marginBottom='.5rem';
+        w.textContent='Waiting for: '+missing.map(r=>ROLE_LABELS[r]).join(', ')+' to save their answers.';
+        inputArea.insertBefore(w, inputArea.firstChild);
+      }
+    }else{
+      const w=document.getElementById('waiting-chip');
+      if(w)w.remove();
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CODE WORD CHECK
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function checkCode(pNum){
+  const {group, role} = SESSION;
+  const input = document.getElementById('code-inp').value.trim().toUpperCase();
+  const fb    = document.getElementById('code-fb');
+
+  if(input.length < 4){
+    fb.innerHTML='<div class="alert alert-error">Enter the full 4-letter code.</div>';return;
+  }
+
+  const expected = CODES[pNum];
+
+  // Verify all four role answers start with the right letters
+  const answers = await dbGet('groups/'+group+'/answers/p'+pNum) || {};
+  const roles   = ['worker','manager','regulator','oso'];
+  let wrongRole  = null;
+  for(let i=0;i<roles.length;i++){
+    const r   = roles[i];
+    const ans = (answers[r]||'').trim();
+    const fl  = ans.slice(0,1).toUpperCase();
+    if(fl !== expected[i]){wrongRole = ROLE_LABELS[r]; break;}
+  }
+
+  if(wrongRole){
+    fb.innerHTML=`<div class="alert alert-error">${wrongRole}'s answer does not start with the correct letter. Ask them to revise before retrying.</div>`;
+    return;
+  }
+
+  if(input !== expected){
+    fb.innerHTML='<div class="alert alert-error">Code word incorrect. Check that all four role answers start with the right letters and try again.</div>';
+    return;
+  }
+
+  // Correct! Mark puzzle complete
+  fb.innerHTML='<div class="alert alert-ok">Correct! Recording...</div>';
+  if(rolesStatusInterval){clearInterval(rolesStatusInterval);rolesStatusInterval=null;}
+  await advancePuzzle(pNum);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// P6 READINESS (all four answers + synthesis before submit enabled)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let p6Interval = null;
+
+function pollP6Readiness(pNum){
+  if(p6Interval) clearInterval(p6Interval);
+  checkP6Readiness(pNum);
+  p6Interval = setInterval(()=>checkP6Readiness(pNum), 3000);
+}
+
+async function checkP6Readiness(pNum){
+  const {group} = SESSION;
+  const answers = await dbGet('groups/'+group+'/answers/p'+pNum) || {};
+  const roles   = ['worker','manager','regulator','oso'];
+  const done    = roles.filter(r=>answers[r]&&answers[r].trim().length>10);
+  const synth   = answers.synthesis && answers.synthesis.trim().length > 30;
+
+  const area = document.getElementById('p6-submit-area');
+  if(!area) return;
+
+  const missingRoles = roles.filter(r=>!done.includes(r)).map(r=>ROLE_LABELS[r]);
+
+  if(done.length===4 && synth){
+    area.innerHTML=`
+      <div class="card">
+        <div class="alert alert-ok" style="margin-bottom:.75rem">All answers and synthesis saved. You may now submit to finish the race.</div>
+        <button class="btn btn-success btn-full" onclick="submitP6()">Submit and finish the race</button>
+      </div>`;
+    if(p6Interval){clearInterval(p6Interval);p6Interval=null;}
+  }else{
+    let msg = '';
+    if(missingRoles.length>0) msg += 'Waiting for: '+missingRoles.join(', ')+'. ';
+    if(!synth) msg += 'Group synthesis not yet saved.';
+    area.innerHTML=`<div class="alert alert-warn">${msg}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ADVANCING PUZZLES & FINISH
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function advancePuzzle(pNum){
+  const {group} = SESSION;
+  const elapsed = raceStartTime ? Date.now()-raceStartTime : 0;
+  const chain   = GROUPS[group].chain;
+
+  // Update DB progress
+  const progress = await dbGet('groups/'+group+'/progress') || {completedPuzzles:[],puzzleIdx:0};
+  if(!progress.completedPuzzles) progress.completedPuzzles=[];
+  if(!progress.completedPuzzles.includes(pNum)){
+    progress.completedPuzzles.push(pNum);
+    progress['elapsed_p'+pNum] = elapsed;
+  }
+
+  SESSION.puzzleIdx++;
+  progress.puzzleIdx = SESSION.puzzleIdx;
+  await dbSet('groups/'+group+'/progress', progress);
+  saveSession();
+
+  if(SESSION.puzzleIdx >= chain.length){
+    showFinishedScreen();return;
+  }
+
+  const nextPuzzle = PUZZLES[chain[SESSION.puzzleIdx]];
+  document.getElementById('puzzle-area').innerHTML=`
+    <div class="card" style="text-align:center;padding:2rem 1rem">
+      <div style="font-size:2.5rem;margin-bottom:.75rem">&#10003;</div>
+      <h2 style="color:var(--success);margin-bottom:.5rem">Puzzle ${SESSION.puzzleIdx} complete!</h2>
+      <div class="loc-box" style="text-align:left;margin:1rem 0">
+        <h3>Next: go to</h3>
+        <p>${nextPuzzle.location}</p>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="renderPuzzle()">I'm at the next station</button>
+    </div>`;
+  renderPips();
+}
+
+async function submitP6(){
+  const {group} = SESSION;
+  const elapsed = raceStartTime ? Date.now()-raceStartTime : 0;
+  const progress = await dbGet('groups/'+group+'/progress') || {completedPuzzles:[],puzzleIdx:0};
+  if(!progress.completedPuzzles) progress.completedPuzzles=[];
+  if(!progress.completedPuzzles.includes(6)){
+    progress.completedPuzzles.push(6);
+    progress.elapsed_p6 = elapsed;
+    progress.finished = true;
+    progress.finishTime = elapsed;
+  }
+  SESSION.puzzleIdx = GROUPS[group].chain.length;
+  progress.puzzleIdx = SESSION.puzzleIdx;
+  await dbSet('groups/'+group+'/progress', progress);
+
+  // Add to finish order
+  const fo = await dbGet('race/finishOrder') || [];
+  if(!fo.find(f=>f.group===group)){
+    fo.push({group, elapsed, time:fmtTime(elapsed)});
+    await dbSet('race/finishOrder', fo);
+  }
+  saveSession();
+  showFinishedScreen(elapsed, fo);
+}
+
+async function showFinishedScreen(elapsed, fo){
+  clearInterval(timerInterval);
+  clearInterval(rolesStatusInterval);
+  clearInterval(p6Interval);
+  if(!elapsed){
+    const prog = await dbGet('groups/'+SESSION.group+'/progress') || {};
+    elapsed = prog.finishTime || 0;
+    fo = await dbGet('race/finishOrder') || [];
+  }
+  const rank = fo ? fo.findIndex(f=>f.group===SESSION.group)+1 : 0;
+  document.getElementById('finish-heading').textContent = rank>0 ? RANK_WORDS[rank-1]+' to finish!' : 'Finished!';
+  document.getElementById('finish-sub').textContent = rank>0 ? SCORES[rank-1]+' points' : '';
+  document.getElementById('finish-time').textContent = 'Group '+SESSION.group+' final time: '+fmtTime(elapsed);
+  showScreen('finished');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INSTRUCTOR DASHBOARD
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function startInstructorRefresh(){
+  renderLeaderboard();
+  if(instrRefreshInterval) clearInterval(instrRefreshInterval);
+  instrRefreshInterval = setInterval(renderLeaderboard, 4000);
+  // Live timer
+  setInterval(async()=>{
+    const st = await dbGet('race/startTime');
+    const el = document.getElementById('instr-clock');
+    if(!el) return;
+    if(st) el.textContent='Elapsed: '+fmtTime(Date.now()-st);
+    else el.textContent='Race not started';
+    const tc=document.getElementById('timer-status');
+    if(tc) tc.textContent = st ? 'Race running. Timer started.' : 'Race not yet started.';
+  },1000);
+}
+
+async function renderLeaderboard(){
+  const groups = ['A','B','C','D','E','F'];
+  const fo = await dbGet('race/finishOrder') || [];
+
+  const rows = await Promise.all(groups.map(async g=>{
+    const prog = await dbGet('groups/'+g+'/progress') || {completedPuzzles:[],puzzleIdx:0};
+    const done = (prog.completedPuzzles||[]).length;
+    const finished = prog.finished || false;
+    const finishT = prog.finishTime || null;
+    const lastMs = done>0 ? Math.max(...(prog.completedPuzzles||[]).map(p=>prog['elapsed_p'+p]||0)) : Infinity;
+    return {g,done,finished,finishT,lastMs};
+  }));
+
+  rows.sort((a,b)=>b.done-a.done||a.lastMs-b.lastMs);
+
+  let html='';
+  rows.forEach((row,i)=>{
+    const chain = GROUPS[row.g].chain;
+    let pips='';
+    chain.forEach(pNum=>{
+      const d=(row.lastMs!==Infinity&&pNum<=(row.done));
+      pips+=`<span class="pip ${row.finished||d?'pip-done':'pip-lock'}"></span>`;
+    });
+    const tag = row.finished
+      ? `<span style="background:#D1FAE5;color:#065F46;border-radius:6px;padding:.2rem .5rem;font-size:.75rem;font-weight:700">Done ${fmtTime(row.finishT||0)}</span>`
+      : `<span style="font-size:.8rem;color:var(--muted)">${row.done}/6</span>`;
+    html+=`<div class="lb-row" style="border-left-color:${GROUPS[row.g].color}${i===0?' background:#FEF9C3':i===1?' background:#F1F5F9':i===2?' background:#FEF0E6':''}">
+      <span style="font-weight:700;font-size:1rem;color:var(--muted)">${i+1}</span>
+      <div>
+        <span style="font-weight:600;font-size:.92rem">Group ${row.g}</span>
+        <div style="margin-top:.2rem">${pips}</div>
+      </div>
+      ${tag}
+    </div>`;
+  });
+
+  const el=document.getElementById('lb-list');
+  if(el) el.innerHTML=html||'<p>No groups active yet.</p>';
+}
+
+async function renderAnswersTab(){
+  const groups=['A','B','C','D','E','F'];
+  let html='';
+  for(const g of groups){
+    const prog = await dbGet('groups/'+g+'/progress') || {};
+    const members = await dbGet('groups/'+g+'/members') || {};
+    const memberStr = ['worker','manager','regulator','oso'].map(r=>members[r]?`<span class="role-chip chip-done tag-${r}" style="font-size:.7rem">${ROLE_LABELS[r]}: ${members[r].name}</span>`:'').filter(Boolean).join(' ');
+    if(!memberStr) continue;
+
+    html+=`<div style="margin-bottom:1.5rem">
+      <div style="font-weight:700;font-size:.92rem;color:${GROUPS[g].color};padding:.3rem .6rem;background:#F8FAFB;border-radius:6px;border-left:3px solid ${GROUPS[g].color};margin-bottom:.5rem">
+        Group ${g} ${prog.finished?'<span style="color:var(--success)">&#10003; Finished '+fmtTime(prog.finishTime||0)+'</span>':''}
+      </div>
+      <div style="margin-bottom:.5rem">${memberStr}</div>`;
+
+    const chain = GROUPS[g].chain;
+    for(let idx=0;idx<chain.length;idx++){
+      const pNum = chain[idx];
+      const answers = await dbGet('groups/'+g+'/answers/p'+pNum) || {};
+      if(Object.keys(answers).length===0) continue;
+      const isDone = (prog.completedPuzzles||[]).includes(pNum);
+      html+=`<div style="margin-bottom:.5rem;padding:.6rem .75rem;background:#F8FAFB;border-radius:8px;border:1px solid var(--border)">
+        <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:.3rem">
+          P${idx+1} (Puzzle ${pNum}) -- ${PUZZLES[pNum].topic} ${isDone?'<span style="color:var(--success)">DONE</span>':''}
+        </div>
+        ${['worker','manager','regulator','oso'].map(r=>answers[r]?`<div class="answer-excerpt"><strong>${ROLE_LABELS[r]}${answers[r+'_name']?' ('+answers[r+'_name']+')':''}:</strong> ${answers[r].slice(0,150)}${answers[r].length>150?'...':''}</div>`:'').join('')}
+        ${answers.synthesis?`<div class="answer-excerpt" style="border-left:2px solid var(--navy);padding-left:.5rem;margin-top:.3rem"><strong>Synthesis:</strong> ${answers.synthesis.slice(0,200)}${answers.synthesis.length>200?'...':''}</div>`:''}
+      </div>`;
+    }
+    html+='</div>';
+  }
+  const el=document.getElementById('ans-list');
+  if(el) el.innerHTML=html||'<p>No answers submitted yet.</p>';
+}
+
+async function startTimer(){
+  const existing = await dbGet('race/startTime');
+  if(existing && !confirm('Race timer already running. Restart it?')) return;
+  await dbSet('race/startTime', Date.now());
+  alert('Race timer started! All waiting students will now begin.');
+  renderLeaderboard();
+}
+
+async function stopTimer(){
+  if(!confirm('Pause/reset timer? This will not delete any answers.')) return;
+  await dbSet('race/startTime', null);
+  alert('Timer stopped.');
+}
+
+async function resetAll(){
+  if(!confirm('Delete ALL race data including all answers? This cannot be undone.')) return;
+  await dbSet('/', null);
+  localStorage.removeItem(LS_SESSION);
+  alert('All data deleted. Reload the page to start fresh.');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+(async function boot(){
+  const cfg  = loadConfig();
+  INSTR_PASS = localStorage.getItem(LS_PASS) || '';
+
+  if(!cfg || !cfg.databaseURL){
+    showScreen('setup'); return;
+  }
+
+  if(!initFirebase(cfg)){
+    showScreen('setup'); return;
+  }
+
+  // Try to restore session
+  const sess = loadSession();
+  if(sess && sess.group && sess.role && sess.name){
+    SESSION = sess;
+    // Sync puzzle index from DB in case other roles have completed puzzles
+    const prog = await dbGet('groups/'+sess.group+'/progress') || {completedPuzzles:[],puzzleIdx:0};
+    const chain = GROUPS[sess.group].chain;
+    let pidx=0;
+    for(let i=0;i<chain.length;i++){
+      if((prog.completedPuzzles||[]).includes(chain[i])) pidx=i+1;
+      else break;
+    }
+    SESSION.puzzleIdx = Math.min(pidx, chain.length-1);
+    saveSession();
+
+    if(prog.finished || SESSION.puzzleIdx>=chain.length){
+      showFinishedScreen(); return;
+    }
+    const st = await dbGet('race/startTime');
+    renderWaitingOrRace(st);
+    return;
+  }
+
+  showScreen('landing');
+})();
+</script>
+</body>
+</html>
