@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LIS 10 Information Escape Room</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A2E44;--teal:#0F6E56;--amber:#854F0B;--red:#993C1D;--slate:#2E4057;
+  --green:#3B6D11;--bg:#F8FAFB;--card:#fff;--border:#E2E8F0;
+  --text:#1A202C;--muted:#64748B;--success:#059669;--error:#DC2626;
+  --worker-bg:#E1F5EE;--worker-border:#0F6E56;--worker-text:#085041;
+  --manager-bg:#FFF3CD;--manager-border:#854F0B;--manager-text:#633806;
+  --regulator-bg:#E8EDF2;--regulator-border:#1A2E44;--regulator-text:#0D1B2A;
+  --oso-bg:#FAECE7;--oso-border:#993C1D;--oso-text:#712B13;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+h1{font-size:1.5rem;font-weight:700;color:var(--navy)}
+h2{font-size:1.1rem;font-weight:600;color:var(--slate);margin-bottom:.75rem}
+h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem}
+p{font-size:.9rem;line-height:1.6;color:var(--muted)}
+.screen{display:none;padding:1.5rem;max-width:600px;margin:0 auto}
+.screen.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.btn{display:inline-block;padding:.6rem 1.25rem;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;border:none;transition:opacity .15s}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{opacity:.88}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover{opacity:.88}
+.btn-outline{background:transparent;border:1.5px solid var(--navy);color:var(--navy)}
+.btn-outline:hover{background:#EBF2FA}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-full{display:block;width:100%;text-align:center;padding:.75rem}
+select,input[type=text],textarea{width:100%;padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;font-size:.9rem;background:#fff;color:var(--text);font-family:inherit}
+textarea{resize:vertical;min-height:70px}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--navy);outline-offset:1px;border-color:transparent}
+.role-badge{display:inline-block;padding:.25rem .65rem;border-radius:6px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.role-worker{background:var(--worker-bg);color:var(--worker-text);border:1px solid var(--worker-border)}
+.role-manager{background:var(--manager-bg);color:var(--manager-text);border:1px solid var(--manager-border)}
+.role-regulator{background:var(--regulator-bg);color:var(--regulator-text);border:1px solid var(--regulator-border)}
+.role-oso{background:var(--oso-bg);color:var(--oso-text);border:1px solid var(--oso-border)}
+.role-field{border-radius:10px;padding:1rem;margin-bottom:.75rem}
+.role-field.worker{background:var(--worker-bg);border:1px solid var(--worker-border)}
+.role-field.manager{background:var(--manager-bg);border:1px solid var(--manager-border)}
+.role-field.regulator{background:var(--regulator-bg);border:1px solid var(--regulator-border)}
+.role-field.oso{background:var(--oso-bg);border:1px solid var(--oso-border)}
+.role-field label{display:block;font-size:.8rem;font-weight:700;margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.05em}
+.role-field.worker label{color:var(--worker-text)}
+.role-field.manager label{color:var(--manager-text)}
+.role-field.regulator label{color:var(--regulator-text)}
+.role-field.oso label{color:var(--oso-text)}
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:.75rem 0}
+.progress-fill{height:100%;background:var(--navy);border-radius:3px;transition:width .4s}
+.stamp{display:inline-flex;align-items:center;gap:.35rem;padding:.3rem .7rem;border-radius:20px;font-size:.8rem;font-weight:600}
+.stamp.done{background:#D1FAE5;color:#065F46}
+.stamp.locked{background:#F1F5F9;color:#94A3B8}
+.stamp.current{background:#DBEAFE;color:#1E40AF}
+.error-msg{color:var(--error);font-size:.85rem;font-weight:600;padding:.5rem;background:#FEF2F2;border-radius:6px;margin-top:.5rem}
+.success-msg{color:#065F46;font-size:.85rem;font-weight:600;padding:.5rem;background:#D1FAE5;border-radius:6px;margin-top:.5rem}
+.location-box{background:#FFF8E1;border:1.5px solid #F59E0B;border-radius:10px;padding:1rem;margin:1rem 0}
+.location-box h3{color:#92400E;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em}
+.location-box p{color:#78350F;font-size:.95rem;font-weight:500;margin-top:.35rem}
+.timer{font-size:2rem;font-weight:700;color:var(--navy);text-align:center;letter-spacing:.05em;font-variant-numeric:tabular-nums}
+.pulse{animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.leaderboard-row{display:grid;grid-template-columns:2rem 1fr auto;gap:.75rem;align-items:center;padding:.6rem .75rem;border-radius:8px;margin-bottom:.4rem}
+.leaderboard-row:nth-child(1){background:#FEF9C3}
+.leaderboard-row:nth-child(2){background:#F1F5F9}
+.leaderboard-row:nth-child(3){background:#FEF0E6}
+.rank{font-weight:700;font-size:1.1rem;color:var(--muted)}
+.puzzle-pip{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 1px}
+.pip-done{background:var(--success)}
+.pip-current{background:#3B82F6}
+.pip-locked{background:var(--border)}
+.divider{border:none;border-top:1px solid var(--border);margin:1rem 0}
+.code-reveal{font-size:2.5rem;font-weight:800;letter-spacing:.15em;color:var(--navy);text-align:center;padding:1rem;background:#EBF8FF;border-radius:10px;border:2px solid var(--navy)}
+.instructor-tab{display:inline-block;padding:.5rem 1rem;cursor:pointer;border-radius:8px 8px 0 0;font-size:.85rem;font-weight:600;border:1px solid var(--border);background:var(--bg);color:var(--muted)}
+.instructor-tab.active{background:var(--card);border-bottom-color:var(--card);color:var(--navy)}
+.answer-peek{font-size:.8rem;color:var(--muted);background:#F8FAFB;border:1px solid var(--border);border-radius:6px;padding:.4rem .6rem;margin-top:.3rem;font-style:italic}
+</style>
+</head>
+<body>
+
+<!-- ═══ LANDING ═══ -->
+<div id="screen-landing" class="screen active">
+  <div style="text-align:center;padding:2rem 0 1.5rem">
+    <div style="font-size:2.5rem;margin-bottom:.5rem">🔒</div>
+    <h1 style="margin-bottom:.35rem">LIS 10 Information Escape Room</h1>
+    <p style="font-size:.95rem">The Factory Case</p>
+  </div>
+  <div class="card">
+    <h2>Who are you?</h2>
+    <div style="margin-bottom:1rem">
+      <label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:.4rem">Group</label>
+      <select id="sel-group">
+        <option value="">-- Select your group --</option>
+        <option value="A">Group A</option>
+        <option value="B">Group B</option>
+        <option value="C">Group C</option>
+        <option value="D">Group D</option>
+        <option value="E">Group E</option>
+        <option value="F">Group F</option>
+      </select>
+    </div>
+    <div style="margin-bottom:1.25rem">
+      <label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:.4rem">Your role</label>
+      <select id="sel-role">
+        <option value="">-- Select your role --</option>
+        <option value="worker">The Worker</option>
+        <option value="manager">The Manager</option>
+        <option value="regulator">The Regulator</option>
+        <option value="oso">The OSO</option>
+      </select>
+    </div>
+    <div style="margin-bottom:1.25rem">
+      <label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:.4rem">Your name (for records)</label>
+      <input type="text" id="inp-name" placeholder="e.g. Juan dela Cruz">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="startRace()">Enter the race</button>
+  </div>
+  <div style="text-align:center;margin-top:1rem">
+    <button class="btn btn-outline" onclick="gotoInstructor()">Instructor view</button>
+  </div>
+</div>
+
+<!-- ═══ RACE (student) ═══ -->
+<div id="screen-race" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+    <div>
+      <span id="race-group-badge" class="role-badge" style="background:var(--navy);color:#fff;font-size:.8rem"></span>
+      <span id="race-role-badge" class="role-badge" style="margin-left:.4rem"></span>
+    </div>
+    <div style="font-size:.85rem;color:var(--muted)" id="race-name-display"></div>
+  </div>
+
+  <div class="card" style="padding:.75rem 1rem;margin-bottom:.75rem">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Race time</span>
+      <div class="timer" id="race-timer">00:00</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div id="puzzle-pips" style="text-align:center"></div>
+  </div>
+
+  <div id="puzzle-area"></div>
+</div>
+
+<!-- ═══ FINISHED ═══ -->
+<div id="screen-finished" class="screen">
+  <div style="text-align:center;padding:2rem 0">
+    <div style="font-size:3rem;margin-bottom:1rem">🏁</div>
+    <h1 style="margin-bottom:.5rem">You finished!</h1>
+    <p id="finish-rank-msg" style="font-size:1.1rem;color:var(--navy);font-weight:600;margin-bottom:.5rem"></p>
+    <p id="finish-time-msg" style="font-size:.9rem"></p>
+  </div>
+  <div class="card">
+    <p style="font-size:.9rem">Your answers have been submitted. Hand your post-its to your instructor and wait for other groups to finish.</p>
+  </div>
+</div>
+
+<!-- ═══ INSTRUCTOR ═══ -->
+<div id="screen-instructor" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+    <h1 style="font-size:1.2rem">Instructor Dashboard</h1>
+    <button class="btn btn-outline" style="padding:.4rem .8rem;font-size:.8rem" onclick="showScreen('landing')">Exit</button>
+  </div>
+
+  <div style="display:flex;gap:.5rem;margin-bottom:-.5rem">
+    <div class="instructor-tab active" onclick="switchTab('leaderboard',this)">Leaderboard</div>
+    <div class="instructor-tab" onclick="switchTab('answers',this)">Answers</div>
+    <div class="instructor-tab" onclick="switchTab('control',this)">Control</div>
+  </div>
+  <div style="border:1px solid var(--border);border-radius:0 8px 8px 8px;background:var(--card);padding:1rem">
+    <div id="tab-leaderboard">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+        <h2 style="margin:0">Live race</h2>
+        <span style="font-size:.8rem;color:var(--muted)" id="instr-timer"></span>
+      </div>
+      <div id="leaderboard-list"></div>
+    </div>
+    <div id="tab-answers" style="display:none">
+      <h2>Role answers by group</h2>
+      <div id="answers-list"></div>
+    </div>
+    <div id="tab-control" style="display:none">
+      <h2>Race control</h2>
+      <div style="display:grid;gap:.75rem">
+        <button class="btn btn-primary" onclick="startRaceTimer()">Start race timer</button>
+        <button class="btn btn-outline" onclick="resetAll()">Reset all data (new race)</button>
+        <div class="card" style="margin:0">
+          <h3>Code word key (for reference)</h3>
+          <div style="font-size:.85rem;margin-top:.5rem">
+            <div style="margin-bottom:.4rem"><strong>P1:</strong> DIKW &nbsp; <strong>P2:</strong> BADC &nbsp; <strong>P3:</strong> MAPS &nbsp; <strong>P4:</strong> RFSA &nbsp; <strong>P5:</strong> DWRL &nbsp; <strong>P6:</strong> [synthesis — no code]</div>
+            <p style="margin-top:.5rem;font-size:.8rem">Each letter = first letter of the correct answer from Worker, Manager, Regulator, OSO respectively.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══ DATA LAYER ════════════════════════════════════════════════════════════════
+
+const GROUPS = {
+  A:{chain:[1,2,3,4,5,6],color:'#B71C1C'},
+  B:{chain:[2,3,4,5,6,1],color:'#1B5E20'},
+  C:{chain:[3,4,5,6,1,2],color:'#0D47A1'},
+  D:{chain:[4,5,6,1,2,3],color:'#E65100'},
+  E:{chain:[5,6,1,2,3,4],color:'#4A148C'},
+  F:{chain:[6,1,2,3,4,5],color:'#00695C'},
+};
+
+// Composite code words: [W,M,R,O] first letters of CORRECT answers at each puzzle
+// P1: Data/Information/Knowledge/Wisdom -> D,I,K,W -> DIKW
+// P2: Env(B),Commodity(A),Communication(D),Representation(C) -> B,A,D,C -> BADC
+// P3: rights/Medical/Assignment/specific -> M,A,P,S -> MAPS (Mang Totoy / Action / Proportionality / Specific)
+// P4: Reproduction/Fair/Section/Attribution -> R,F,S,A -> RFSA
+// P5: Dyeing/Wage/RA11058/Long-term -> D,W,R,L -> DWRL
+// P6: no code word - synthesis submission
+
+const CODES = {
+  1:'DIKW', 2:'BADC', 3:'MAPS', 4:'RFSA', 5:'DWRL', 6:null
+};
+
+// Role order for composite: worker=0, manager=1, regulator=2, oso=3
+const ROLE_IDX = {worker:0,manager:1,regulator:2,oso:3};
+
+const PUZZLES = {
+  1:{
+    title:'The Building Blocks',
+    topic:'DIKW',
+    location:'Classroom — your starting table',
+    scenario:`Mang Totoy's incident has generated four pieces of information. As a group, read each item carefully, then each role answers their individual question below. Your answers' first letters combine to form the code word.`,
+    items:[
+      '(A) The incident logbook entry: "14 March, 09:22, Dyeing Section, 1 worker affected, chemical exposure." No explanation. No names.',
+      '(B) The nurse\'s report: chemical identified, duration, symptoms, referral to hospital -- organized and explained.',
+      '(C) The DOLE inspector, after reading the report and cross-referencing OSHS Rule 1070: "The company has been violating this rule for at least one year."',
+      '(D) Mang Totoy\'s wife, now understanding his rights, decides to file a complaint with DOLE.'
+    ],
+    questions:{
+      worker:'Item (A) is raw data. What ONE thing would transform it into information for a worker? Your answer must start with the letter D.',
+      manager:'Item (B) is information. What specific ingredient was added to make it information rather than data? Your answer must start with the letter I.',
+      regulator:'Item (C) is knowledge. What did the inspector bring to the information that made it knowledge -- not just more reading? Your answer must start with the letter K.',
+      oso:'Item (D) is wisdom. In one sentence, what makes this action wisdom and not just knowledge? Your answer must start with the letter W.'
+    },
+    hints:{
+      worker:'Think: what makes data meaningful? (D___)',
+      manager:'Think: what ingredient turns raw symbols into something understandable? (I_____)',
+      regulator:'Think: what does the inspector bring that the information itself cannot provide? (K_______)',
+      oso:'Think: what is the defining quality of wisdom that distinguishes it from knowledge? (W_____)'
+    }
+  },
+  2:{
+    title:'The Many Faces of Information',
+    topic:'McCreadie & Rice',
+    location:'Classroom door (inside) -- envelope labeled COMMODITY',
+    scenario:`Five information events from the factory case. Each role owns specific events. Match each to McCreadie & Rice\'s four conceptualizations, then answer your role question. First letters combine to form the code word.`,
+    items:[
+      '(1) The factory alarm sounds -- noise travels physically through the air into workers\' ears before anyone reads a report.',
+      '(2) The HR officer buys a copy of Azucena\'s Everyone\'s Labor Code for PHP 1,250 to check the company\'s legal obligations.',
+      '(3) DOLE sends a formal Notice of Inspection by registered mail. The company reads and acknowledges it in writing.',
+      '(4) The OSO\'s Chemical Safety Data Sheet (SDS) binder -- 200 pages of original hazard analyses written over three years.',
+      '(5) A co-worker notices the dyeing section smells strongly of chemicals every morning -- a sensory pattern no one has documented.'
+    ],
+    questions:{
+      worker:'Events (1) and (5) are both "information as data in the environment." In one sentence, what do these two share that makes them BOTH that conceptualization? Your answer must start with the letter B.',
+      manager:'Event (2) is yours. What conceptualization is it, and what makes information a "commodity"? Your answer must start with the letter A.',
+      regulator:'Event (3) is yours. What conceptualization is it? Identify the specific act that makes this the communication process. Your answer must start with the letter D.',
+      oso:'Event (4) is yours. Why is the SDS a "representation of knowledge" and not just data? Your answer must start with the letter C.'
+    },
+    hints:{
+      worker:'Think: what is sensed but not yet interpreted, existing in the physical environment? (B___)',
+      manager:'Think: it was bought, sold, and produced for consumption. First letter? (A)',
+      regulator:'Think: a sender, a message, a medium, a receiver -- the act of informing. (D___)',
+      oso:'Think: original knowledge recorded in stable, perceivable form. (C________)'
+    }
+  },
+  3:{
+    title:'Read the Book, Build the Pyramid',
+    topic:'DIKW from a real book',
+    location:'SOLAIR Library -- ask librarian for envelope labeled ERASURE',
+    scenario:`Go to the SOLAIR Library reference desk. Ask for the Handbook on Workers\' Statutory Monetary Benefits (Call No. HD 4928 N62 P6 P45 2017). Open to the RED bookmark (data) and BLUE bookmark (information). Each role answers from what you read. First letters combine to form the code word.`,
+    items:[
+      'RED BOOKMARK (Data): A table of raw benefit computation figures -- percentages, day counts, peso caps. No explanation of what they mean.',
+      'BLUE BOOKMARK (Information): The legal narrative explaining each benefit -- who qualifies, the formula, how to apply.',
+      'Your group must generate KNOWLEDGE and WISDOM from what you read together.'
+    ],
+    questions:{
+      worker:'Mang Totoy now understands something he could not have known from the numbers alone. What does he understand? Your answer must start with the letter M (think: what specifically belongs to him now).',
+      manager:'What action must the company take that the raw numbers in the red bookmark alone could NOT have told them? Your answer must start with the letter A.',
+      regulator:'Name the ONE principle of RA 10173 that is most at risk if the company shares Mang Totoy\'s medical data from this investigation with all 12 HR officers without his knowledge. Your answer must start with the letter P.',
+      oso:'Write a specific, actionable wisdom statement -- one thing the company must do before any future chemical shift. Your answer must start with the letter S (think: what safety action).'
+    },
+    hints:{
+      worker:'Think: what right or entitlement does Mang Totoy now know he has? (M_____)',
+      manager:'Think: what obligation does the company now understand it must fulfill? (A_____)',
+      regulator:'Think: which DPA principle is violated when you share more data than necessary with more people than needed? (P______________)',
+      oso:'Think: a specific pre-shift safety procedure. (S_______)'
+    }
+  },
+  4:{
+    title:"The Blogger's Dilemma",
+    topic:'Copyright (RA 8293)',
+    location:'SOLAIR Library -- ask librarian for envelope labeled SECTION185',
+    scenario:`The OSO wants to write a blog about chemical safety using three materials from Azucena\'s Everyone\'s Labor Code (Call No. KF 5616.7 1974 A97 2021, bookmarked). Each role answers one question. First letters combine to form the code word.`,
+    items:[
+      'Material A: Two paragraphs of Azucena\'s own commentary and analysis of Article 162 -- his original writing.',
+      'Material B: The text of Article 162 of the Labor Code itself, reproduced verbatim in the book.',
+      'Material C: A table of maximum chemical exposure levels derived from DOLE OSHS standards.'
+    ],
+    questions:{
+      worker:'Which economic right of Azucena (Sec. 177, RA 8293) would be violated if the OSO copies Material A into the blog without permission? Name the right. Your answer must start with the letter R.',
+      manager:'Material B is the statutory text of the law itself. Under RA 8293, is it protected? What provision applies? Your answer must start with the letter F (think: is it FREE to use?).',
+      regulator:'The OSO argues fair use covers Material A for worker education. Which section of RA 8293 is this? Your answer must start with the letter S.',
+      oso:'What is the ONE lawful action the OSO should take to use Material A properly in the blog? Your answer must start with the letter A (think: what do you give the author?).'
+    },
+    hints:{
+      worker:'Think: which right covers copying/reproducing a work? (R_____________)',
+      manager:'Think: statutory texts are not protected -- what section of RA 8293 says so? (F___ to use -- Sec. 175)',
+      regulator:'Think: the fair use clause section number. (S_______185)',
+      oso:'Think: what do you give the author when you quote them? (A___________)'
+    }
+  },
+  5:{
+    title:'The Analytics War Room',
+    topic:'Four Levels of Analytics',
+    location:'Hallway wall near staircase -- envelope labeled PRESCRIPTIVE',
+    scenario:`DOLE inspection data from the factory. Each role owns one analytics level. Your answers\' first letters combine to form the code word. The group must also write a final wisdom sentence together.`,
+    items:[
+      'Dyeing Section (14 workers): PHP 610/day, NCR min wage PHP 645, No PPE, 420 lost workdays (30/worker avg)',
+      'Cutting Section (22 workers): PHP 645/day, Gloves only, 88 lost workdays (4/worker avg)',
+      'Finishing Section (18 workers): PHP 645/day, Full PPE, 12 lost workdays (0.7/worker avg)',
+      'Supervisors (6): PHP 900/day, Full PPE, 0 lost workdays'
+    ],
+    questions:{
+      worker:'DESCRIPTIVE: Summarize the most important pattern from a worker\'s perspective in 1-2 sentences. Your answer must start with the letter D (think: what does the DATA show?).',
+      manager:'DIAGNOSTIC: Why does the dyeing section have the highest injury rate? Connect cause to effect in 2 sentences. Your answer must start with the letter W (think: Why did it happen?).',
+      regulator:'PREDICTIVE: What will happen to the dyeing section workers in 12 months if nothing changes? Cite one specific legal consequence (law or provision). Your answer must start with the letter R (think: what Risk or Result?).',
+      oso:'PRESCRIPTIVE (beyond the minimum): Write one specific, data-grounded recommendation that goes beyond just following the law. Your answer must start with the letter L (think: what should the company do Long-term or immediately to achieve a specific outcome?).'
+    },
+    hints:{
+      worker:'Think: describe what the DATA shows -- the pattern of wages and workdays. (D___ shows...)',
+      manager:'Think: Why did it happen -- connect PPE absence to injury rate. (W_______ PPE...)',
+      regulator:'Think: what is the legal Result or Risk if nothing changes? Cite RA 11058 or Labor Code. (R______...)',
+      oso:'Think: a specific Long-term or immediate action grounded in data. (L_______ / I_______...)'
+    }
+  },
+  6:{
+    title:'THE CONVERGENCE',
+    topic:'Integration -- all four topics',
+    location:"Instructor's table -- envelope labeled CONVERGENCE",
+    scenario:`Each role answers ONE integration question from their lens. All five answers together form the complete picture of Mang Totoy\'s journey from data to wisdom. There is no code word -- submit your answers to finish the race.`,
+    items:[
+      'The case: Mang Totoy\'s injury generated data, became information through the nurse\'s report, became knowledge through the inspector\'s analysis, and should produce wisdom through the company\'s decision.',
+      'The blog: The OSO wrote about chemical safety using Azucena\'s commentary (fair use, Sec. 185) and NWPC wage data (Sec. 175).',
+      'The privacy issue: The company stored Mang Totoy\'s injury records in a shared HR drive with 12 officers.'
+    ],
+    questions:{
+      worker:'TOPIC 1+2: After the case, Mang Totoy\'s family asks the company to delete his health records. Name the specific RA 10173 right they are invoking. Then: if those records had been deleted before the DOLE inspection, would the journey to wisdom have been possible? Why or why not? (2-3 sentences)',
+      manager:'TOPIC 1+4: The inspector\'s conclusion -- "the company has violated Rule 1070 for at least one year" -- required cross-referencing the nurse\'s report with past records. Which DIKW level is this, AND which analytics level produced it? Explain why both answers are the same level.',
+      regulator:'TOPIC 2+3: The OSO published Mang Totoy\'s name and diagnosis in the blog as a case study. Identify: (a) which DPA principle this violates and why; (b) whether Sec. 185 (fair use) protects this or not -- give one specific reason.',
+      oso:'TOPIC 3+4: The blog used Azucena\'s commentary AND the NWPC wage table. For each, state whether a lawful basis was needed and name it. Then: how did having BOTH move readers from information to knowledge?'
+    },
+    synthesis:'GROUP SYNTHESIS (all sign): In three sentences, explain how all four topics of LIS 10 -- the nature of information, data privacy, copyright, and data analytics -- each played a specific role in Mang Totoy\'s journey from the raw logbook entry (DATA) to the company\'s final prescriptive decision (WISDOM). Name the concept, the law or provision, and the DIKW stage each affected.'
+  }
+};
+
+// ═══ STATE ═════════════════════════════════════════════════════════════════════
+
+let STATE = {
+  group: null, role: null, name: null,
+  currentPuzzleIdx: 0,  // index into chain
+  answers: {},          // puzzleNum -> {worker,manager,regulator,oso,synthesis}
+  timestamps: {},       // puzzleNum -> ms elapsed when completed
+  finished: false,
+  raceStartTime: null,
+  timerInterval: null,
+};
+
+// Shared state (persisted, shared across all users)
+async function loadShared(){
+  try{
+    const r = await window.storage.get('race_state', true);
+    return r ? JSON.parse(r.value) : {startTime:null, finishOrder:[], groupProgress:{}};
+  }catch(e){ return {startTime:null, finishOrder:[], groupProgress:{}}; }
+}
+async function saveShared(data){
+  try{ await window.storage.set('race_state', JSON.stringify(data), true); }catch(e){}
+}
+async function loadGroupAnswers(group){
+  try{
+    const r = await window.storage.get('answers_'+group, true);
+    return r ? JSON.parse(r.value) : {};
+  }catch(e){ return {}; }
+}
+async function saveGroupAnswers(group, data){
+  try{ await window.storage.set('answers_'+group, JSON.stringify(data), true); }catch(e){}
+}
+
+// ═══ NAVIGATION ════════════════════════════════════════════════════════════════
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+
+function gotoInstructor(){
+  showScreen('instructor');
+  startInstructorRefresh();
+}
+
+function switchTab(tab, el){
+  document.querySelectorAll('.instructor-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-leaderboard').style.display = tab==='leaderboard'?'block':'none';
+  document.getElementById('tab-answers').style.display = tab==='answers'?'block':'none';
+  document.getElementById('tab-control').style.display = tab==='control'?'block':'none';
+  if(tab==='answers') renderAnswers();
+}
+
+// ═══ RACE SETUP ════════════════════════════════════════════════════════════════
+
+async function startRace(){
+  const group = document.getElementById('sel-group').value;
+  const role = document.getElementById('sel-role').value;
+  const name = document.getElementById('inp-name').value.trim();
+  if(!group||!role||!name){
+    alert('Please fill in all three fields.');return;
+  }
+  STATE.group = group;
+  STATE.role = role;
+  STATE.name = name;
+  STATE.currentPuzzleIdx = 0;
+
+  // Load existing group answers
+  STATE.answers = await loadGroupAnswers(group);
+
+  // Determine current puzzle based on what's already been completed
+  const chain = GROUPS[group].chain;
+  const shared = await loadShared();
+  const gp = shared.groupProgress[group] || {completedPuzzles:[], elapsedMs:{}};
+  // Find first incomplete puzzle in chain
+  let startIdx = 0;
+  for(let i=0;i<chain.length;i++){
+    if(gp.completedPuzzles.includes(chain[i])) startIdx = i+1;
+    else break;
+  }
+  STATE.currentPuzzleIdx = Math.min(startIdx, chain.length-1);
+  STATE.raceStartTime = shared.startTime;
+
+  showScreen('race');
+  renderRaceHeader();
+  renderCurrentPuzzle();
+  startRaceTimerDisplay();
+}
+
+function renderRaceHeader(){
+  const g = STATE.group;
+  const badge = document.getElementById('race-group-badge');
+  badge.textContent = 'Group '+g;
+  badge.style.background = GROUPS[g].color;
+
+  const roleBadge = document.getElementById('race-role-badge');
+  const roleNames = {worker:'The Worker',manager:'The Manager',regulator:'The Regulator',oso:'The OSO'};
+  const roleClasses = {worker:'role-worker',manager:'role-manager',regulator:'role-regulator',oso:'role-oso'};
+  roleBadge.textContent = roleNames[STATE.role];
+  roleBadge.className = 'role-badge '+roleClasses[STATE.role];
+
+  document.getElementById('race-name-display').textContent = STATE.name;
+}
+
+async function startRaceTimerDisplay(){
+  if(STATE.timerInterval) clearInterval(STATE.timerInterval);
+  STATE.timerInterval = setInterval(async()=>{
+    const shared = await loadShared();
+    if(!shared.startTime){
+      document.getElementById('race-timer').textContent = 'Waiting...';
+      document.getElementById('race-timer').classList.add('pulse');
+      return;
+    }
+    document.getElementById('race-timer').classList.remove('pulse');
+    STATE.raceStartTime = shared.startTime;
+    const elapsed = Date.now() - shared.startTime;
+    document.getElementById('race-timer').textContent = formatTime(elapsed);
+    // Update pips
+    renderPips();
+  }, 1000);
+}
+
+function formatTime(ms){
+  const s = Math.floor(ms/1000);
+  const m = Math.floor(s/60);
+  return String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+}
+
+async function renderPips(){
+  const chain = GROUPS[STATE.group].chain;
+  const shared = await loadShared();
+  const gp = shared.groupProgress[STATE.group] || {completedPuzzles:[]};
+  let html = '';
+  chain.forEach((pNum,i)=>{
+    const done = gp.completedPuzzles.includes(pNum);
+    const cur = i === STATE.currentPuzzleIdx;
+    const cls = done?'pip-done':cur?'pip-current':'pip-locked';
+    html += `<span class="puzzle-pip ${cls}" title="Puzzle ${i+1}"></span>`;
+  });
+  const pct = Math.round((STATE.currentPuzzleIdx / chain.length)*100);
+  document.getElementById('progress-fill').style.width = pct+'%';
+  document.getElementById('puzzle-pips').innerHTML = html;
+}
+
+// ═══ PUZZLE RENDERING ══════════════════════════════════════════════════════════
+
+function renderCurrentPuzzle(){
+  const chain = GROUPS[STATE.group].chain;
+  if(STATE.currentPuzzleIdx >= chain.length){
+    // All done
+    showFinished();return;
+  }
+  const puzzleNum = chain[STATE.currentPuzzleIdx];
+  const puzzle = PUZZLES[puzzleNum];
+  const role = STATE.role;
+  const existing = STATE.answers[puzzleNum] || {};
+  const isP6 = puzzleNum === 6;
+
+  let html = '';
+
+  // Header
+  html += `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem">
+      <div>
+        <div style="font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">Puzzle ${STATE.currentPuzzleIdx+1} of ${chain.length} &nbsp;·&nbsp; ${puzzle.topic}</div>
+        <h1 style="font-size:1.15rem;margin-bottom:0">${puzzle.title}</h1>
+      </div>
+      ${!isP6?`<div style="background:#EBF8FF;color:#1E40AF;border-radius:6px;padding:.3rem .6rem;font-size:.75rem;font-weight:700">Code needed</div>`:'<div style="background:#D1FAE5;color:#065F46;border-radius:6px;padding:.3rem .6rem;font-size:.75rem;font-weight:700">Final puzzle</div>'}
+    </div>
+    <div class="location-box">
+      <h3>Where to go</h3>
+      <p>${puzzle.location}</p>
+    </div>
+    <p style="font-size:.9rem;margin-bottom:.75rem">${puzzle.scenario}</p>
+    <div style="background:#F8FAFB;border-radius:8px;padding:.75rem;margin-bottom:.5rem">
+      ${puzzle.items.map(it=>`<p style="font-size:.85rem;margin-bottom:.5rem;color:var(--text)">${it}</p>`).join('')}
+    </div>
+  </div>`;
+
+  // Role question
+  const roleClasses = {worker:'worker',manager:'manager',regulator:'regulator',oso:'oso'};
+  const roleLabels = {worker:'The Worker',manager:'The Manager',regulator:'The Regulator',oso:'The OSO'};
+  const rc = roleClasses[role];
+  const q = puzzle.questions[role];
+  const hint = puzzle.hints ? puzzle.hints[role] : null;
+
+  html += `<div class="card">
+    <div class="role-field ${rc}" style="margin-bottom:0">
+      <label>${roleLabels[role]} -- your question</label>
+      <p style="font-size:.9rem;color:inherit;margin-bottom:.75rem">${q}</p>
+      <textarea id="role-answer" placeholder="Type your answer here..." rows="4">${existing[role]||''}</textarea>
+      ${hint?`<p style="font-size:.78rem;margin-top:.4rem;opacity:.8">Hint: ${hint}</p>`:''}
+    </div>
+  </div>`;
+
+  if(isP6){
+    // Synthesis field too
+    html += `<div class="card">
+      <h2>Group synthesis <span style="font-size:.8rem;font-weight:400;color:var(--muted)">(all members contribute)</span></h2>
+      <p style="font-size:.85rem;margin-bottom:.75rem">${puzzle.synthesis}</p>
+      <textarea id="synthesis-answer" placeholder="Write your group's 3-sentence synthesis here..." rows="6">${existing.synthesis||''}</textarea>
+    </div>
+    <button class="btn btn-success btn-full" onclick="submitP6()">Submit final answers & finish race</button>`;
+  } else {
+    html += `<div class="card">
+      <h2>Code word check</h2>
+      <p style="font-size:.85rem;margin-bottom:.75rem">Once all four roles have answered, combine the first letter of each role's correct answer (Worker / Manager / Regulator / OSO) to form the 4-letter code word.</p>
+      <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
+        <input type="text" id="code-input" placeholder="Enter 4-letter code..." maxlength="6" style="text-transform:uppercase;font-size:1.1rem;font-weight:700;letter-spacing:.1em;text-align:center;flex:1">
+        <button class="btn btn-primary" onclick="checkCode(${puzzleNum})">Check</button>
+      </div>
+      <div id="code-feedback"></div>
+    </div>`;
+  }
+
+  document.getElementById('puzzle-area').innerHTML = html;
+  renderPips();
+
+  // Auto-save on type
+  document.getElementById('role-answer').addEventListener('input', ()=>autoSave(puzzleNum));
+  if(isP6) document.getElementById('synthesis-answer').addEventListener('input', ()=>autoSave(puzzleNum));
+  if(!isP6){
+    document.getElementById('code-input').addEventListener('keyup', e=>{
+      if(e.key==='Enter') checkCode(puzzleNum);
+    });
+  }
+}
+
+async function autoSave(puzzleNum){
+  const ans = document.getElementById('role-answer').value;
+  if(!STATE.answers[puzzleNum]) STATE.answers[puzzleNum] = {};
+  STATE.answers[puzzleNum][STATE.role] = ans;
+  const synthEl = document.getElementById('synthesis-answer');
+  if(synthEl) STATE.answers[puzzleNum].synthesis = synthEl.value;
+  await saveGroupAnswers(STATE.group, STATE.answers);
+}
+
+// ═══ CODE CHECKING ══════════════════════════════════════════════════════════════
+
+async function checkCode(puzzleNum){
+  const input = document.getElementById('code-input').value.trim().toUpperCase();
+  const fb = document.getElementById('code-feedback');
+
+  if(input.length < 4){
+    fb.innerHTML = '<div class="error-msg">Enter the full 4-letter code word.</div>'; return;
+  }
+
+  // Save current answer first
+  await autoSave(puzzleNum);
+
+  // Check the first letter of the submitted role answer
+  const ans = (STATE.answers[puzzleNum]||{})[STATE.role]||'';
+  const firstLetter = ans.trim().slice(0,1).toUpperCase();
+  const expected = CODES[puzzleNum];
+  const roleIdx = ROLE_IDX[STATE.role];
+  const expectedLetter = expected[roleIdx];
+
+  // Check: the role answer first letter must match AND the full code must match
+  if(firstLetter !== expectedLetter){
+    fb.innerHTML = `<div class="error-msg">Your answer doesn\'t seem to start with the right letter. Check your response for the ${Object.keys(ROLE_IDX)[roleIdx]} role and try again.</div>`;
+    return;
+  }
+
+  if(input !== expected){
+    fb.innerHTML = `<div class="error-msg">Code word incorrect. Make sure all four roles have answered with the right first letters and combine them in order: Worker, Manager, Regulator, OSO.</div>`;
+    return;
+  }
+
+  // Correct!
+  fb.innerHTML = '<div class="success-msg">Correct! Recording your completion...</div>';
+  await completePuzzle(puzzleNum);
+}
+
+async function completePuzzle(puzzleNum){
+  const shared = await loadShared();
+  const elapsed = shared.startTime ? Date.now() - shared.startTime : 0;
+
+  if(!shared.groupProgress[STATE.group]) shared.groupProgress[STATE.group] = {completedPuzzles:[],elapsedMs:{}};
+  const gp = shared.groupProgress[STATE.group];
+  if(!gp.completedPuzzles.includes(puzzleNum)){
+    gp.completedPuzzles.push(puzzleNum);
+    gp.elapsedMs[puzzleNum] = elapsed;
+  }
+  await saveShared(shared);
+
+  // Move to next puzzle
+  STATE.currentPuzzleIdx++;
+  const chain = GROUPS[STATE.group].chain;
+  if(STATE.currentPuzzleIdx >= chain.length){
+    showFinished();
+  } else {
+    // Show next location briefly, then render
+    const nextPuzzle = PUZZLES[chain[STATE.currentPuzzleIdx]];
+    document.getElementById('puzzle-area').innerHTML = `
+      <div class="card" style="text-align:center;padding:2rem">
+        <div style="font-size:2rem;margin-bottom:.75rem">✓</div>
+        <h2 style="color:var(--success);margin-bottom:.5rem">Puzzle ${STATE.currentPuzzleIdx} complete!</h2>
+        <div class="location-box" style="text-align:left;margin:1rem 0">
+          <h3>Next: go to</h3>
+          <p>${nextPuzzle.location}</p>
+        </div>
+        <button class="btn btn-primary" onclick="renderCurrentPuzzle()">I'm at the next station</button>
+      </div>`;
+    renderPips();
+  }
+}
+
+async function submitP6(){
+  await autoSave(6);
+  const ans = STATE.answers[6] || {};
+  if(!ans[STATE.role] || ans[STATE.role].trim().length < 20){
+    alert('Please write a substantive answer before submitting.');return;
+  }
+  if(!ans.synthesis || ans.synthesis.trim().length < 30){
+    alert('Please complete the group synthesis before submitting.');return;
+  }
+
+  const shared = await loadShared();
+  const elapsed = shared.startTime ? Date.now() - shared.startTime : 0;
+  if(!shared.groupProgress[STATE.group]) shared.groupProgress[STATE.group]={completedPuzzles:[],elapsedMs:{}};
+  const gp = shared.groupProgress[STATE.group];
+  if(!gp.completedPuzzles.includes(6)){
+    gp.completedPuzzles.push(6);
+    gp.elapsedMs[6] = elapsed;
+    // Record finish
+    if(!shared.finishOrder.find(f=>f.group===STATE.group)){
+      shared.finishOrder.push({group:STATE.group, elapsed, time:formatTime(elapsed)});
+    }
+  }
+  await saveShared(shared);
+  showFinished(elapsed, shared.finishOrder);
+}
+
+async function showFinished(elapsed, finishOrder){
+  if(!elapsed){
+    const shared = await loadShared();
+    elapsed = (shared.groupProgress[STATE.group]||{}).elapsedMs?.[6] || 0;
+    finishOrder = shared.finishOrder;
+  }
+  clearInterval(STATE.timerInterval);
+
+  const rank = finishOrder ? finishOrder.findIndex(f=>f.group===STATE.group)+1 : 0;
+  const rankWords = ['First','Second','Third','Fourth','Fifth','Sixth'];
+  const scores = [100,95,90,85,80,75];
+
+  document.getElementById('finish-rank-msg').textContent = rank > 0 ? `${rankWords[rank-1]} to finish -- ${scores[rank-1]} points!` : 'Finished!';
+  document.getElementById('finish-time-msg').textContent = `Your time: ${formatTime(elapsed)}`;
+  showScreen('finished');
+}
+
+// ═══ INSTRUCTOR VIEW ═══════════════════════════════════════════════════════════
+
+let instructorInterval = null;
+function startInstructorRefresh(){
+  if(instructorInterval) clearInterval(instructorInterval);
+  renderLeaderboard();
+  instructorInterval = setInterval(renderLeaderboard, 3000);
+}
+
+async function renderLeaderboard(){
+  const shared = await loadShared();
+  const elapsed = shared.startTime ? Date.now()-shared.startTime : 0;
+  document.getElementById('instr-timer').textContent = shared.startTime ? 'Elapsed: '+formatTime(elapsed) : 'Race not started';
+
+  const order = ['A','B','C','D','E','F'];
+  // Sort by puzzles completed desc, then by last completion time asc
+  const rows = order.map(g=>{
+    const gp = shared.groupProgress[g] || {completedPuzzles:[],elapsedMs:{}};
+    const done = gp.completedPuzzles.length;
+    const lastMs = done > 0 ? Math.max(...gp.completedPuzzles.map(p=>gp.elapsedMs[p]||0)) : Infinity;
+    const finished = gp.completedPuzzles.includes(6);
+    return {g, done, lastMs, finished, gp};
+  }).sort((a,b)=> b.done-a.done || a.lastMs-b.lastMs);
+
+  let html = '';
+  rows.forEach((row,i)=>{
+    const chain = GROUPS[row.g].chain;
+    let pips = '';
+    chain.forEach(pNum=>{
+      const done = row.gp.completedPuzzles.includes(pNum);
+      pips += `<span class="puzzle-pip ${done?'pip-done':'pip-locked'}" title="P${pNum}"></span>`;
+    });
+    const finTag = row.finished ? `<span class="stamp done">Done ${formatTime(row.gp.elapsedMs[6]||0)}</span>` : `<span style="font-size:.8rem;color:var(--muted)">${row.done}/6 puzzles</span>`;
+    html += `<div class="leaderboard-row" style="border-left:3px solid ${GROUPS[row.g].color}">
+      <span class="rank">${i+1}</span>
+      <div>
+        <span style="font-weight:600;font-size:.95rem">Group ${row.g}</span>
+        <div style="margin-top:.2rem">${pips}</div>
+      </div>
+      ${finTag}
+    </div>`;
+  });
+  document.getElementById('leaderboard-list').innerHTML = html || '<p>No groups active yet.</p>';
+}
+
+async function renderAnswers(){
+  const groups = ['A','B','C','D','E','F'];
+  let html = '';
+  for(const g of groups){
+    const answers = await loadGroupAnswers(g);
+    const shared = await loadShared();
+    const gp = (shared.groupProgress||{})[g] || {completedPuzzles:[]};
+    if(Object.keys(answers).length === 0) continue;
+    html += `<div style="margin-bottom:1.25rem"><div style="font-weight:700;font-size:.95rem;color:${GROUPS[g].color};margin-bottom:.5rem;padding:.3rem .6rem;background:#F8FAFB;border-radius:6px;border-left:3px solid ${GROUPS[g].color}">Group ${g}</div>`;
+    const chain = GROUPS[g].chain;
+    chain.forEach((pNum,idx)=>{
+      const pAns = answers[pNum];
+      if(!pAns) return;
+      const done = gp.completedPuzzles.includes(pNum);
+      html += `<div style="margin-bottom:.5rem;padding:.6rem .75rem;background:#F8FAFB;border-radius:8px;border:1px solid var(--border)">
+        <div style="font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:.35rem">Puzzle ${idx+1} (P${pNum}) -- ${PUZZLES[pNum].topic} ${done?'<span style="color:var(--success)">DONE</span>':''}</div>
+        ${['worker','manager','regulator','oso'].map(r=>pAns[r]?`<div class="answer-peek"><strong>${r}:</strong> ${pAns[r].slice(0,120)}${pAns[r].length>120?'...':''}</div>`:'').join('')}
+        ${pAns.synthesis?`<div class="answer-peek" style="border-left:2px solid var(--navy);padding-left:.5rem"><strong>Synthesis:</strong> ${pAns.synthesis.slice(0,180)}...</div>`:''}
+      </div>`;
+    });
+    html += '</div>';
+  }
+  document.getElementById('answers-list').innerHTML = html || '<p>No answers submitted yet.</p>';
+}
+
+async function startRaceTimer(){
+  const shared = await loadShared();
+  if(shared.startTime){
+    if(!confirm('Race already started. Reset start time?')) return;
+  }
+  shared.startTime = Date.now();
+  await saveShared(shared);
+  alert('Race timer started! All groups can now begin.');
+  renderLeaderboard();
+}
+
+async function resetAll(){
+  if(!confirm('This will delete ALL race data. Are you sure?')) return;
+  try{
+    await window.storage.delete('race_state', true);
+    const groups = ['A','B','C','D','E','F'];
+    for(const g of groups) await window.storage.delete('answers_'+g, true);
+    alert('All data reset.');
+    renderLeaderboard();
+  }catch(e){ alert('Reset failed: '+e.message); }
+}
+</script>
+</body>
+</html>
